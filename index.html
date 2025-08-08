@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>PolicyLab | Interactive Policy Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <div class="max-w-6xl mx-auto p-4 sm:p-6">
+    <header class="mb-6">
+      <h1 class="text-3xl font-extrabold tracking-tight">PolicyLab</h1>
+      <p class="text-sm text-gray-600">A guided portal to craft a complete policy proposal from structured inputs.</p>
+    </header>
+
+    <!-- Progress -->
+    <div class="w-full bg-gray-200 h-2 rounded mb-6">
+      <div id="progressBar" class="bg-blue-600 h-2 rounded" style="width: 12.5%"></div>
+    </div>
+
+    <!-- Stepper -->
+    <nav class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-6">
+      <button data-step="1" class="step-btn px-3 py-2 rounded border bg-white text-left">1. Briefing</button>
+      <button data-step="2" class="step-btn px-3 py-2 rounded border bg-white text-left">2. Problem</button>
+      <button data-step="3" class="step-btn px-3 py-2 rounded border bg-white text-left">3. Stakeholders</button>
+      <button data-step="4" class="step-btn px-3 py-2 rounded border bg-white text-left">4. Objectives</button>
+      <button data-step="5" class="step-btn px-3 py-2 rounded border bg-white text-left">5. Instruments</button>
+      <button data-step="6" class="step-btn px-3 py-2 rounded border bg-white text-left">6. Implementation</button>
+      <button data-step="7" class="step-btn px-3 py-2 rounded border bg-white text-left">7. Monitoring</button>
+      <button data-step="8" class="step-btn px-3 py-2 rounded border bg-white text-left">8. Synthesis</button>
+    </nav>
+
+    <!-- Panels -->
+    <section id="panel-1" class="panel space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Welcome and Scenario</h2>
+        <label class="block text-sm font-medium">Scenario title</label>
+        <input id="scenarioTitle" class="w-full mt-1 p-2 border rounded" placeholder="Example: Online consumer harms in digital marketplaces" />
+        <label class="block text-sm font-medium mt-4">Scenario brief</label>
+        <textarea id="scenarioBrief" class="w-full mt-1 p-2 border rounded h-28" placeholder="100 to 150 words describing context, institutions, and legal landscape"></textarea>
+        <label class="block text-sm font-medium mt-4">Domain</label>
+        <select id="domain" class="w-full mt-1 p-2 border rounded">
+          <option>Digital markets and competition</option>
+          <option>Data protection and privacy</option>
+          <option>Environmental regulation</option>
+          <option>Public health</option>
+          <option>IP and innovation policy</option>
+          <option>Infrastructure and utilities</option>
+        </select>
+      </div>
+    </section>
+
+    <section id="panel-2" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Problem Framing</h2>
+        <label class="block text-sm font-medium">Problem statement</label>
+        <textarea id="problemStatement" class="w-full mt-1 p-2 border rounded h-28" placeholder="Concise definition of the policy problem"></textarea>
+        <div class="grid sm:grid-cols-2 gap-4 mt-4">
+          <div>
+            <label class="block text-sm font-medium">Symptoms</label>
+            <textarea id="symptoms" class="w-full mt-1 p-2 border rounded h-24" placeholder="Observable harms or failures"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Root causes</label>
+            <textarea id="rootCauses" class="w-full mt-1 p-2 border rounded h-24" placeholder="Structural, legal, economic, or design drivers"></textarea>
+          </div>
+        </div>
+        <label class="block text-sm font-medium mt-4">Legal baselines or precedents</label>
+        <textarea id="legalBaselines" class="w-full mt-1 p-2 border rounded h-24" placeholder="Statutes, case law, regulations, standards"></textarea>
+      </div>
+    </section>
+
+    <section id="panel-3" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-3">Stakeholder Mapping</h2>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <input id="stakeName" class="p-2 border rounded" placeholder="Name or category" />
+          <input id="stakeRole" class="p-2 border rounded" placeholder="Role or function" />
+          <input id="stakeInterest" class="p-2 border rounded" placeholder="Interests" />
+          <input id="stakePower" class="p-2 border rounded" placeholder="Power or influence" />
+          <button id="addStakeholder" class="px-3 py-2 bg-blue-600 text-white rounded">Add</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Name</th>
+                <th class="p-2 border">Role</th>
+                <th class="p-2 border">Interests</th>
+                <th class="p-2 border">Power</th>
+                <th class="p-2 border">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="stakeTable"></tbody>
+          </table>
+        </div>
+        <p class="text-xs text-gray-600 mt-2">Tip: include regulators, firms, consumer groups, civil society, technical bodies, standard setters, courts.</p>
+      </div>
+    </section>
+
+    <section id="panel-4" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Objectives and Constraints</h2>
+        <label class="block text-sm font-medium">Primary objectives</label>
+        <textarea id="objectives" class="w-full mt-1 p-2 border rounded h-24" placeholder="2 to 3 normative goals. Example: autonomy, fairness, contestability"></textarea>
+        <label class="block text-sm font-medium mt-4">Constraints</label>
+        <textarea id="constraints" class="w-full mt-1 p-2 border rounded h-24" placeholder="Legal, political, economic, administrative constraints"></textarea>
+        <label class="block text-sm font-medium mt-4">Design principles</label>
+        <textarea id="principles" class="w-full mt-1 p-2 border rounded h-24" placeholder="Clarity, proportionality, adaptability, transparency, subsidiarity"></textarea>
+      </div>
+    </section>
+
+    <section id="panel-5" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-3">Policy Instruments</h2>
+        <p class="text-sm text-gray-700 mb-2">Pick from the menu or add your own. Add justification for each selection.</p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium">Instrument</label>
+            <select id="instrumentPick" class="w-full mt-1 p-2 border rounded">
+              <option>Competition remedies</option>
+              <option>Conduct rules or codes</option>
+              <option>Licensing or certification</option>
+              <option>Disclosure or transparency</option>
+              <option>Taxation or levies</option>
+              <option>Procurement levers</option>
+              <option>Technical standards</option>
+              <option>Behavioral nudges</option>
+              <option>Sandbox or pilot</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Justification</label>
+            <input id="instrumentWhy" class="w-full mt-1 p-2 border rounded" placeholder="How it aligns with objectives and stakeholder realities" />
+          </div>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button id="addInstrument" class="px-3 py-2 bg-blue-600 text-white rounded">Add instrument</button>
+        </div>
+        <ul id="instrumentList" class="mt-4 space-y-2"></ul>
+      </div>
+    </section>
+
+    <section id="panel-6" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-3">Implementation Plan</h2>
+        <div class="grid sm:grid-cols-4 gap-2 items-end">
+          <div>
+            <label class="block text-sm font-medium">Task</label>
+            <input id="implTask" class="w-full mt-1 p-2 border rounded" placeholder="Example: Draft rules" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Actor</label>
+            <input id="implActor" class="w-full mt-1 p-2 border rounded" placeholder="Agency or unit" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Timeline</label>
+            <input id="implTime" class="w-full mt-1 p-2 border rounded" placeholder="Q1 2026" />
+          </div>
+          <div>
+            <button id="addImpl" class="w-full px-3 py-2 bg-blue-600 text-white rounded">Add</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto mt-3">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Task</th>
+                <th class="p-2 border">Actor</th>
+                <th class="p-2 border">Timeline</th>
+                <th class="p-2 border">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="implTable"></tbody>
+          </table>
+        </div>
+        <label class="block text-sm font-medium mt-4">Resources or budget notes</label>
+        <textarea id="resources" class="w-full mt-1 p-2 border rounded h-20" placeholder="Optional"></textarea>
+      </div>
+    </section>
+
+    <section id="panel-7" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-2">Monitoring and Adaptation</h2>
+        <div class="grid sm:grid-cols-4 gap-2 items-end">
+          <div>
+            <label class="block text-sm font-medium">Metric</label>
+            <input id="metricName" class="w-full mt-1 p-2 border rounded" placeholder="Example: Switching costs index" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Method</label>
+            <input id="metricMethod" class="w-full mt-1 p-2 border rounded" placeholder="Survey, audit, API logs" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium">Frequency</label>
+            <input id="metricFreq" class="w-full mt-1 p-2 border rounded" placeholder="Quarterly" />
+          </div>
+          <div>
+            <button id="addMetric" class="w-full px-3 py-2 bg-blue-600 text-white rounded">Add</button>
+          </div>
+        </div>
+        <div class="overflow-x-auto mt-3">
+          <table class="w-full text-sm border">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="p-2 border">Metric</th>
+                <th class="p-2 border">Method</th>
+                <th class="p-2 border">Frequency</th>
+                <th class="p-2 border">Remove</th>
+              </tr>
+            </thead>
+            <tbody id="metricTable"></tbody>
+          </table>
+        </div>
+        <label class="block text-sm font-medium mt-4">Adaptive governance and sunset clauses</label>
+        <textarea id="adaptiveNotes" class="w-full mt-1 p-2 border rounded h-20" placeholder="Feedback loops, review triggers, sunset timelines"></textarea>
+      </div>
+    </section>
+
+    <section id="panel-8" class="panel space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h2 class="text-xl font-semibold mb-3">Synthesis</h2>
+        <p class="text-sm text-gray-700">Click compile to generate a formatted proposal. You can edit in place, copy, print, or export as Markdown.</p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button id="compileBtn" class="px-3 py-2 bg-blue-600 text-white rounded">Compile proposal</button>
+          <button id="exportMd" class="px-3 py-2 bg-emerald-600 text-white rounded">Export Markdown</button>
+          <button id="printDoc" class="px-3 py-2 bg-gray-800 text-white rounded">Print</button>
+          <button id="resetAll" class="px-3 py-2 bg-red-600 text-white rounded">Reset</button>
+        </div>
+        <article id="output" class="prose max-w-none bg-gray-50 p-4 rounded border min-h-[20rem]" contenteditable="true"></article>
+      </div>
+    </section>
+
+    <!-- Footer save status -->
+    <footer class="mt-6 text-xs text-gray-500 flex items-center justify-between">
+      <span id="saveStatus">Autosaved</span>
+      <div class="flex gap-2">
+        <button id="saveNow" class="px-2 py-1 border rounded bg-white">Save now</button>
+        <button id="loadNow" class="px-2 py-1 border rounded bg-white">Load saved</button>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    // Simple state
+    const state = {
+      scenarioTitle: "", scenarioBrief: "", domain: "Digital markets and competition",
+      problemStatement: "", symptoms: "", rootCauses: "", legalBaselines: "",
+      stakeholders: [],
+      objectives: "", constraints: "", principles: "",
+      instruments: [],
+      implementation: [],
+      resources: "",
+      metrics: [],
+      adaptiveNotes: ""
+    };
+
+    // Helpers
+    const $ = (id) => document.getElementById(id);
+    const panels = [...document.querySelectorAll(".panel")];
+    const stepBtns = [...document.querySelectorAll(".step-btn")];
+
+    function showStep(n) {
+      panels.forEach((p, i) => p.classList.toggle("hidden", i !== n - 1));
+      stepBtns.forEach((b) => b.classList.remove("bg-blue-50", "border-blue-600"));
+      document.querySelector(`.step-btn[data-step="${n}"]`).classList.add("bg-blue-50", "border-blue-600");
+      $("progressBar").style.width = `${n * 12.5}%`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+    stepBtns.forEach((b) => b.addEventListener("click", () => showStep(parseInt(b.dataset.step))));
+
+    // Bind inputs
+    const bindings = [
+      ["scenarioTitle","scenarioTitle"],["scenarioBrief","scenarioBrief"],["domain","domain"],
+      ["problemStatement","problemStatement"],["symptoms","symptoms"],["rootCauses","rootCauses"],["legalBaselines","legalBaselines"],
+      ["objectives","objectives"],["constraints","constraints"],["principles","principles"],
+      ["resources","resources"],["adaptiveNotes","adaptiveNotes"]
+    ];
+    bindings.forEach(([id, key]) => {
+      $(id).addEventListener("input", e => { state[key] = e.target.value; autosave(); });
+    });
+
+    // Stakeholders
+    function renderStakeholders() {
+      const tbody = $("stakeTable");
+      tbody.innerHTML = "";
+      state.stakeholders.forEach((s, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-2 border">${escapeHtml(s.name)}</td>
+          <td class="p-2 border">${escapeHtml(s.role)}</td>
+          <td class="p-2 border">${escapeHtml(s.interest)}</td>
+          <td class="p-2 border">${escapeHtml(s.power)}</td>
+          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.i); state.stakeholders.splice(i,1); renderStakeholders(); autosave();
+      }));
+    }
+    $("addStakeholder").addEventListener("click", () => {
+      const name = $("stakeName").value.trim();
+      const role = $("stakeRole").value.trim();
+      const interest = $("stakeInterest").value.trim();
+      const power = $("stakePower").value.trim();
+      if (!name) return;
+      state.stakeholders.push({ name, role, interest, power });
+      ["stakeName","stakeRole","stakeInterest","stakePower"].forEach(id => $(id).value = "");
+      renderStakeholders(); autosave();
+    });
+
+    // Instruments
+    function renderInstruments() {
+      const ul = $("instrumentList");
+      ul.innerHTML = "";
+      state.instruments.forEach((ins, i) => {
+        const li = document.createElement("li");
+        li.className = "border rounded p-2 flex items-start justify-between gap-3 bg-white";
+        li.innerHTML = `
+          <div>
+            <div class="font-medium">${escapeHtml(ins.name)}</div>
+            <div class="text-sm text-gray-700">${escapeHtml(ins.why)}</div>
+          </div>
+          <button data-i="${i}" class="text-red-600 underline">Remove</button>`;
+        ul.appendChild(li);
+      });
+      ul.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.i); state.instruments.splice(i,1); renderInstruments(); autosave();
+      }));
+    }
+    $("addInstrument").addEventListener("click", () => {
+      const name = $("instrumentPick").value;
+      const why = $("instrumentWhy").value.trim();
+      if (!name) return;
+      state.instruments.push({ name, why });
+      $("instrumentWhy").value = "";
+      renderInstruments(); autosave();
+    });
+
+    // Implementation
+    function renderImpl() {
+      const tbody = $("implTable");
+      tbody.innerHTML = "";
+      state.implementation.forEach((r, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-2 border">${escapeHtml(r.task)}</td>
+          <td class="p-2 border">${escapeHtml(r.actor)}</td>
+          <td class="p-2 border">${escapeHtml(r.time)}</td>
+          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.i); state.implementation.splice(i,1); renderImpl(); autosave();
+      }));
+    }
+    $("addImpl").addEventListener("click", () => {
+      const task = $("implTask").value.trim();
+      const actor = $("implActor").value.trim();
+      const time = $("implTime").value.trim();
+      if (!task) return;
+      state.implementation.push({ task, actor, time });
+      ["implTask","implActor","implTime"].forEach(id => $(id).value = "");
+      renderImpl(); autosave();
+    });
+
+    // Metrics
+    function renderMetrics() {
+      const tbody = $("metricTable");
+      tbody.innerHTML = "";
+      state.metrics.forEach((m, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-2 border">${escapeHtml(m.name)}</td>
+          <td class="p-2 border">${escapeHtml(m.method)}</td>
+          <td class="p-2 border">${escapeHtml(m.freq)}</td>
+          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
+        tbody.appendChild(tr);
+      });
+      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
+        const i = parseInt(btn.dataset.i); state.metrics.splice(i,1); renderMetrics(); autosave();
+      }));
+    }
+    $("addMetric").addEventListener("click", () => {
+      const name = $("metricName").value.trim();
+      const method = $("metricMethod").value.trim();
+      const freq = $("metricFreq").value.trim();
+      if (!name) return;
+      state.metrics.push({ name, method, freq });
+      ["metricName","metricMethod","metricFreq"].forEach(id => $(id).value = "");
+      renderMetrics(); autosave();
+    });
+
+    // Compile Proposal
+    $("compileBtn").addEventListener("click", () => {
+      const md = compileMarkdown(state);
+      $("output").innerHTML = markdownToHtml(md);
+    });
+
+    // Export Markdown
+    $("exportMd").addEventListener("click", () => {
+      const md = compileMarkdown(state);
+      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = "PolicyProposal.md"; a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Print
+    $("printDoc").addEventListener("click", () => window.print());
+
+    // Save and load
+    function autosave() {
+      localStorage.setItem("policylab_state_v1", JSON.stringify(state));
+      $("saveStatus").textContent = "Autosaved";
+    }
+    $("saveNow").addEventListener("click", autosave);
+    $("loadNow").addEventListener("click", loadSaved);
+
+    function loadSaved() {
+      const saved = localStorage.getItem("policylab_state_v1");
+      if (!saved) return;
+      const s = JSON.parse(saved);
+      Object.assign(state, s);
+      // Rehydrate inputs
+      bindings.forEach(([id, key]) => { if ($(id)) $(id).value = state[key] || ""; });
+      renderStakeholders(); renderInstruments(); renderImpl(); renderMetrics();
+      $("saveStatus").textContent = "Loaded";
+    }
+
+    // Utils
+    function escapeHtml(str="") {
+      return str.replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
+    }
+
+    function compileMarkdown(s) {
+      const stakeLines = s.stakeholders.map(x => `- ${x.name} | role ${x.role} | interests ${x.interest} | power ${x.power}`).join("\n");
+      const insLines = s.instruments.map(x => `- ${x.name}: ${x.why}`).join("\n");
+      const implLines = s.implementation.map(x => `- ${x.task} | ${x.actor} | ${x.time}`).join("\n");
+      const metricLines = s.metrics.map(x => `- ${x.name} | ${x.method} | ${x.freq}`).join("\n");
+
+      return `# ${s.scenarioTitle || "Policy Proposal"}
+Domain: ${s.domain}
+
+## Scenario Brief
+${s.scenarioBrief}
+
+## 1. Problem Framing
+**Problem statement**  
+${s.problemStatement}
+
+**Symptoms**  
+${s.symptoms}
+
+**Root causes**  
+${s.rootCauses}
+
+**Legal baselines or precedents**  
+${s.legalBaselines}
+
+## 2. Stakeholder Mapping
+${stakeLines || "- None added"}
+
+## 3. Objectives and Constraints
+**Objectives**  
+${s.objectives}
+
+**Constraints**  
+${s.constraints}
+
+**Design principles**  
+${s.principles}
+
+## 4. Policy Instruments
+${insLines || "- None added"}
+
+## 5. Implementation Plan
+${implLines || "- None added"}
+
+**Resources or budget notes**  
+${s.resources}
+
+## 6. Monitoring and Adaptation
+**Metrics**  
+${metricLines || "- None added"}
+
+**Adaptive governance and sunset**  
+${s.adaptiveNotes}
+
+## 7. Executive Summary
+Provide a 150 word summary here after review.
+`;
+    }
+
+    // Tiny Markdown to HTML for headings and simple lists
+    function markdownToHtml(md) {
+      let h = escapeHtml(md);
+      h = h.replace(/^### (.*)$/gm, "<h3 class='text-lg font-semibold mt-4 mb-2'>$1</h3>");
+      h = h.replace(/^## (.*)$/gm, "<h2 class='text-xl font-bold mt-6 mb-2'>$1</h2>");
+      h = h.replace(/^# (.*)$/gm, "<h1 class='text-2xl font-extrabold mt-2 mb-2'>$1</h1>");
+      h = h.replace(/^\- (.*)$/gm, "<li>$1</li>");
+      h = h.replace(/(<li>.*<\/li>)(\n<li>.*<\/li>)+/gs, match => `<ul class="list-disc pl-6 space-y-1">${match}</ul>`);
+      h = h.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+      h = h.replace(/\n\n/g, "<br><br>");
+      return h;
+    }
+
+    // Init
+    showStep(1);
+    loadSaved();
+  </script>
+</body>
+</html>
