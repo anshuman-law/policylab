@@ -1,713 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>PolicyLab | Interactive Policy Builder</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* simple print */
-    @media print {
-      nav, footer, #printDoc, #resetAll, #exportMd, #saveNow, #loadNow, #exportJson, #importJsonBtn { display:none !important; }
-      .shadow { box-shadow:none !important; }
-    }
-    canvas { image-rendering: crisp-edges; }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PolicyLab — Holistic, Visual, Interactive</title>
+<style>
+  :root{
+    --bg:#0f172a; --ink:#e6eefc; --muted:#a9b6cf; --card:#0b1224;
+    --line:#1e2a44; --accent:#7fb3ff; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    --chip:#0e1a34; --tint:#0c1428; --white:#ffffff;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:radial-gradient(1200px 800px at 15% -10%,#1a2750 0%,#0f172a 60%);color:var(--ink);
+            font-family:Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif}
+  header{padding:16px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;justify-content:space-between}
+  header h1{margin:0;font-size:clamp(20px,3.2vw,28px);letter-spacing:.2px}
+  header .sub{color:var(--muted);font-size:12px}
+  .wrap{display:grid;grid-template-columns:280px 1fr;gap:14px;max-width:1200px;margin:0 auto;padding:14px}
+  @media(max-width:980px){.wrap{grid-template-columns:1fr}}
+  nav{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));border:1px solid var(--line);border-radius:14px}
+  .nav-inner{padding:12px}
+  .btn{appearance:none;border:1px solid #29406e;background:#0d1832;color:#dbe7ff;padding:8px 12px;border-radius:12px;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent}
+  .btn.small{padding:6px 10px;font-size:12px}
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid #263a66;color:#cfe1ff;padding:5px 8px;border-radius:999px;font-size:12px}
+  .card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .panel{padding:14px}
+  .panel h2{margin:0 0 8px;font-size:16px;color:#d7e6ff}
+  .panel h3{margin:12px 0 6px;font-size:13px;color:#d7e6ff}
+  .hint{color:var(--muted);font-size:12px}
+  input[type=text],input[type=number],textarea,select{width:100%;background:#0c1428;border:1px solid #223456;border-radius:12px;color:#e6f0ff;padding:9px 10px}
+  textarea{min-height:84px}
+  .grid{display:grid;gap:10px}
+  .two{grid-template-columns:1fr 1fr}
+  .three{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:900px){.two,.three{grid-template-columns:1fr}}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .kv{display:grid;grid-template-columns:1fr 80px;gap:8px;align-items:center}
+  .pill{padding:6px 10px;border-radius:999px;border:1px solid #223456;background:#0c1428;color:#cfe1ff;font-size:12px}
+  .legend{display:flex;gap:10px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;border:1px solid #1f2b47}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+  .divider{height:1px;background:var(--line);margin:8px 0}
+  .right{margin-left:auto}
+  canvas{display:block;background:#0c1428;border:1px solid #223456;border-radius:12px}
+  .stage{position:relative;background:#0c1428;border:1px solid #223456;border-radius:12px;height:460px;overflow:hidden}
+  .node{position:absolute;padding:8px 10px;border-radius:10px;border:1px solid #2a3e68;color:#e6f0ff;cursor:grab;user-select:none;box-shadow:0 6px 14px rgba(0,0,0,.25)}
+  .node:active{cursor:grabbing}
+  .type-driver{background:#0e2b3a}
+  .type-policy{background:#243056}
+  .type-output{background:#2f214f}
+  .type-outcome{background:#2b3b20}
+  .type-harm{background:#4a1f1f}
+  .badge{background:#0f1832;border:1px solid #243356;border-radius:8px;padding:2px 6px;font-size:11px;color:#cfe1ff}
+  .hot{color:#ffd166}
+  .ok{color:#22c55e}
+  .bad{color:#ef4444}
+</style>
 </head>
-<body class="bg-gray-50 text-gray-900">
-  <div class="max-w-6xl mx-auto p-4 sm:p-6">
-    <header class="mb-6">
-      <h1 class="text-3xl font-extrabold tracking-tight">PolicyLab</h1>
-      <p class="text-sm text-gray-600">A guided portal to craft a complete policy proposal from structured inputs.</p>
-    </header>
-
-    <!-- Progress -->
-    <div class="w-full bg-gray-200 h-2 rounded mb-6">
-      <div id="progressBar" class="bg-blue-600 h-2 rounded" style="width: 12.5%"></div>
+<body>
+  <header>
+    <div>
+      <h1>PolicyLab</h1>
+      <div class="sub">Holistic, visual, and interactive policy tools. Runs locally in your browser, no data is collected by LaMCRESA.</div>
     </div>
+    <div class="toolbar">
+      <button id="presetDigital" class="btn small">Load demo</button>
+      <button id="exportJson" class="btn small">Export JSON</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none">
+      <button id="importJson" class="btn small ghost">Import JSON</button>
+    </div>
+  </header>
 
-    <!-- Stepper -->
-    <nav class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-6">
-      <button data-step="1" class="step-btn px-3 py-2 rounded border bg-white text-left">1. Briefing <span class="text-xs ml-2" id="badge-1"></span></button>
-      <button data-step="2" class="step-btn px-3 py-2 rounded border bg-white text-left">2. Problem <span class="text-xs ml-2" id="badge-2"></span></button>
-      <button data-step="3" class="step-btn px-3 py-2 rounded border bg-white text-left">3. Stakeholders <span class="text-xs ml-2" id="badge-3"></span></button>
-      <button data-step="4" class="step-btn px-3 py-2 rounded border bg-white text-left">4. Objectives <span class="text-xs ml-2" id="badge-4"></span></button>
-      <button data-step="5" class="step-btn px-3 py-2 rounded border bg-white text-left">5. Instruments <span class="text-xs ml-2" id="badge-5"></span></button>
-      <button data-step="6" class="step-btn px-3 py-2 rounded border bg-white text-left">6. Implementation <span class="text-xs ml-2" id="badge-6"></span></button>
-      <button data-step="7" class="step-btn px-3 py-2 rounded border bg-white text-left">7. Monitoring <span class="text-xs ml-2" id="badge-7"></span></button>
-      <button data-step="8" class="step-btn px-3 py-2 rounded border bg-white text-left">8. Synthesis <span class="text-xs ml-2" id="badge-8"></span></button>
+  <main class="wrap">
+    <nav class="card">
+      <div class="nav-inner">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <span class="chip">Tools</span>
+          <span id="saveStatus" class="hint">Autosaved</span>
+        </div>
+        <div class="divider"></div>
+        <div class="grid">
+          <button class="btn small" data-panel="mcda">1. MCDA Board</button>
+          <button class="btn small" data-panel="causal">2. Causal Map</button>
+          <button class="btn small" data-panel="risk">3. Risk Bow-Tie</button>
+          <button class="btn small" data-panel="capacity">4. Capacity Heatmap</button>
+          <button class="btn small" data-panel="synth">5. Synthesis</button>
+        </div>
+        <div class="divider"></div>
+        <div class="grid">
+          <div class="kv">
+            <input id="scenarioTitle" type="text" placeholder="Scenario title" />
+            <span class="badge">meta</span>
+          </div>
+          <textarea id="scenarioBrief" placeholder="Short brief..."></textarea>
+          <select id="domain">
+            <option>Digital markets and competition</option>
+            <option>Data protection and privacy</option>
+            <option>Environmental regulation</option>
+            <option>Public health</option>
+            <option>IP and innovation policy</option>
+            <option>Infrastructure and utilities</option>
+          </select>
+        </div>
+      </div>
     </nav>
 
-    <!-- Panels -->
-    <section id="panel-1" class="panel space-y-4">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-2">Welcome and Scenario</h2>
-        <label class="block text-sm font-medium">Scenario title</label>
-        <input id="scenarioTitle" class="w-full mt-1 p-2 border rounded" placeholder="Example: Online consumer harms in digital marketplaces" />
-        <label class="block text-sm font-medium mt-4">Scenario brief</label>
-        <textarea id="scenarioBrief" class="w-full mt-1 p-2 border rounded h-28" placeholder="100 to 150 words describing context, institutions, and legal landscape"></textarea>
-        <label class="block text-sm font-medium mt-4">Domain</label>
-        <select id="domain" class="w-full mt-1 p-2 border rounded">
-          <option>Digital markets and competition</option>
-          <option>Data protection and privacy</option>
-          <option>Environmental regulation</option>
-          <option>Public health</option>
-          <option>IP and innovation policy</option>
-          <option>Infrastructure and utilities</option>
-        </select>
-      </div>
-    </section>
+    <!-- PANELS -->
+    <section class="card" id="panel-mcda">
+      <div class="panel">
+        <h2>MCDA Board</h2>
+        <div class="hint">Weight criteria and score instruments. See rankings and a weight "tornado".</div>
+        <div class="divider"></div>
 
-    <section id="panel-2" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-2">Problem Framing</h2>
-        <label class="block text-sm font-medium">Problem statement</label>
-        <textarea id="problemStatement" class="w-full mt-1 p-2 border rounded h-28" placeholder="Concise definition of the policy problem"></textarea>
-        <div class="grid sm:grid-cols-2 gap-4 mt-4">
+        <div class="grid three">
           <div>
-            <label class="block text-sm font-medium">Symptoms</label>
-            <textarea id="symptoms" class="w-full mt-1 p-2 border rounded h-24" placeholder="Observable harms or failures"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Root causes</label>
-            <textarea id="rootCauses" class="w-full mt-1 p-2 border rounded h-24" placeholder="Structural, legal, economic, or design drivers"></textarea>
-          </div>
-        </div>
-        <label class="block text-sm font-medium mt-4">Legal baselines or precedents</label>
-        <textarea id="legalBaselines" class="w-full mt-1 p-2 border rounded h-24" placeholder="Statutes, case law, regulations, standards"></textarea>
-      </div>
-    </section>
-
-    <section id="panel-3" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-3">Stakeholder Mapping</h2>
-        <div class="flex flex-wrap gap-2 mb-3">
-          <input id="stakeName" class="p-2 border rounded" placeholder="Name or category" />
-          <input id="stakeRole" class="p-2 border rounded" placeholder="Role or function" />
-          <input id="stakeInterest" class="p-2 border rounded" placeholder="Interests" />
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-600">Interest</label>
-            <input id="stakeInterestScore" type="range" min="1" max="5" value="3" />
-            <span id="stakeInterestView" class="text-xs text-gray-700">3</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-600">Power</label>
-            <input id="stakePowerScore" type="range" min="1" max="5" value="3" />
-            <span id="stakePowerView" class="text-xs text-gray-700">3</span>
-          </div>
-          <button id="addStakeholder" class="px-3 py-2 bg-blue-600 text-white rounded">Add</button>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-sm border">
-              <thead class="bg-gray-100">
-                <tr>
-                  <th class="p-2 border">Name</th>
-                  <th class="p-2 border">Role</th>
-                  <th class="p-2 border">Interests</th>
-                  <th class="p-2 border">Interest</th>
-                  <th class="p-2 border">Power</th>
-                  <th class="p-2 border">Remove</th>
-                </tr>
-              </thead>
-              <tbody id="stakeTable"></tbody>
-            </table>
-          </div>
-          <div class="bg-gray-50 rounded border p-2">
-            <div class="flex items-center justify-between">
-              <div class="text-sm font-medium">Power–Interest map</div>
-              <div class="text-xs text-gray-500">Low to High</div>
+            <h3>Criteria weights</h3>
+            <div id="critList" class="grid"></div>
+            <div class="row" style="margin-top:6px">
+              <button id="addCrit" class="btn small">Add criterion</button>
+              <button id="resetCrit" class="btn small ghost">Reset</button>
+              <span class="hint right">Sum auto-normalizes</span>
             </div>
-            <canvas id="stakeViz" width="520" height="360" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
-            <p class="text-xs text-gray-600 mt-1">Quadrants: Manage closely (high–high), Keep satisfied (high power, low interest), Keep informed (low power, high interest), Monitor (low–low).</p>
+          </div>
+
+          <div>
+            <h3>Add instrument</h3>
+            <input id="insName" type="text" placeholder="Instrument name" />
+            <textarea id="insWhy" placeholder="Justification (optional)"></textarea>
+            <div id="insScores" class="grid"></div>
+            <div class="row" style="margin-top:6px">
+              <button id="addIns" class="btn small">Add</button>
+              <button id="clearIns" class="btn small ghost">Clear all</button>
+            </div>
+            <div id="insList" class="grid" style="margin-top:8px"></div>
+          </div>
+
+          <div>
+            <h3>Notes</h3>
+            <ul class="hint" style="margin:0;padding-left:16px">
+              <li>Weights 0–100; scores 1–5</li>
+              <li>Weighted score uses normalized weights</li>
+              <li>Sensitivity shows most influential criteria</li>
+            </ul>
+            <div class="legend" style="margin-top:8px">
+              <span><i style="background:#7fb3ff"></i><span class="hint">Ranking bars</span></span>
+              <span><i style="background:#ffd166"></i><span class="hint">Tornado weights</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid two" style="margin-top:10px">
+          <div>
+            <h3>Instrument ranking</h3>
+            <canvas id="mcdaRank" width="520" height="300"></canvas>
+          </div>
+          <div>
+            <h3>Weight tornado</h3>
+            <canvas id="mcdaTornado" width="520" height="300"></canvas>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="panel-4" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-2">Objectives and Constraints</h2>
-        <label class="block text-sm font-medium">Primary objectives</label>
-        <textarea id="objectives" class="w-full mt-1 p-2 border rounded h-24" placeholder="2 to 3 normative goals. Example: autonomy, fairness, contestability"></textarea>
-        <label class="block text-sm font-medium mt-4">Constraints</label>
-        <textarea id="constraints" class="w-full mt-1 p-2 border rounded h-24" placeholder="Legal, political, economic, administrative constraints"></textarea>
-        <label class="block text-sm font-medium mt-4">Design principles</label>
-        <textarea id="principles" class="w-full mt-1 p-2 border rounded h-24" placeholder="Clarity, proportionality, adaptability, transparency, subsidiarity"></textarea>
-      </div>
-    </section>
-
-    <section id="panel-5" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-3">Policy Instruments</h2>
-        <p class="text-sm text-gray-700 mb-2">Score each instrument on effectiveness and feasibility to see its position in the matrix.</p>
-        <div class="grid sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-sm font-medium">Instrument</label>
-            <select id="instrumentPick" class="w-full mt-1 p-2 border rounded">
-              <option>Competition remedies</option>
-              <option>Conduct rules or codes</option>
-              <option>Licensing or certification</option>
-              <option>Disclosure or transparency</option>
-              <option>Taxation or levies</option>
-              <option>Procurement levers</option>
-              <option>Technical standards</option>
-              <option>Behavioral nudges</option>
-              <option>Sandbox or pilot</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Justification</label>
-            <input id="instrumentWhy" class="w-full mt-1 p-2 border rounded" placeholder="How it aligns with objectives and stakeholder realities" />
-          </div>
+    <section class="card" id="panel-causal" style="display:none">
+      <div class="panel">
+        <h2>Causal Map</h2>
+        <div class="hint">Add nodes, drag to position, link them. Export as JSON. Color denotes role.</div>
+        <div class="divider"></div>
+        <div class="row">
+          <select id="nodeType" class="btn small">
+            <option value="driver">Driver</option>
+            <option value="policy">Policy</option>
+            <option value="output">Output</option>
+            <option value="outcome">Outcome</option>
+            <option value="harm">Harm</option>
+          </select>
+          <input id="nodeText" type="text" placeholder="Node text" />
+          <button id="addNode" class="btn small">Add node</button>
+          <button id="linkMode" class="btn small ghost">Link mode</button>
+          <button id="clearMap" class="btn small ghost">Clear</button>
+          <button id="exportMap" class="btn small">Export JSON</button>
+          <input id="importMapFile" type="file" accept="application/json" style="display:none">
+          <button id="importMap" class="btn small ghost">Import</button>
+          <span id="mapStatus" class="hint right">idle</span>
         </div>
-        <div class="flex flex-wrap items-end gap-3 mt-2">
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-600">Effectiveness</label>
-            <input id="effScore" type="range" min="1" max="5" value="3" />
-            <span id="effView" class="text-xs text-gray-700">3</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <label class="text-xs text-gray-600">Feasibility</label>
-            <input id="feaScore" type="range" min="1" max="5" value="3" />
-            <span id="feaView" class="text-xs text-gray-700">3</span>
-          </div>
-          <button id="addInstrument" class="px-3 py-2 bg-blue-600 text-white rounded">Add instrument</button>
+        <div class="divider"></div>
+        <div class="stage" id="mapStage">
+          <svg id="mapSVG" width="100%" height="100%" style="position:absolute;left:0;top:0;pointer-events:none">
+            <defs>
+              <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L9,3 z" fill="#7fb3ff"/>
+              </marker>
+            </defs>
+          </svg>
         </div>
-
-        <div class="grid md:grid-cols-2 gap-4 mt-3">
-          <ul id="instrumentList" class="space-y-2"></ul>
-          <div class="bg-gray-50 rounded border p-2">
-            <div class="text-sm font-medium">Effectiveness–Feasibility matrix</div>
-            <canvas id="instViz" width="520" height="360" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
-            <p class="text-xs text-gray-600 mt-1">Top-right are promising quick wins; bottom-left are risky or weak.</p>
-          </div>
+        <div class="legend" style="margin-top:8px">
+          <span class="pill">Driver</span>
+          <span class="pill">Policy</span>
+          <span class="pill">Output</span>
+          <span class="pill">Outcome</span>
+          <span class="pill">Harm</span>
         </div>
       </div>
     </section>
 
-    <section id="panel-6" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-3">Implementation Plan</h2>
-        <div class="grid sm:grid-cols-4 gap-2 items-end">
+    <section class="card" id="panel-risk" style="display:none">
+      <div class="panel">
+        <h2>Risk Register & Bow-Tie</h2>
+        <div class="hint">Score likelihood and impact 1–5. Place on heatmap. Track controls.</div>
+        <div class="divider"></div>
+        <div class="grid three">
           <div>
-            <label class="block text-sm font-medium">Task</label>
-            <input id="implTask" class="w-full mt-1 p-2 border rounded" placeholder="Example: Draft rules" />
+            <h3>Add risk</h3>
+            <input id="riskTitle" type="text" placeholder="Risk title" />
+            <div class="row">
+              <label class="pill">Likelihood <input id="riskLik" type="number" min="1" max="5" value="3" style="width:64px;margin-left:6px"></label>
+              <label class="pill">Impact <input id="riskImp" type="number" min="1" max="5" value="3" style="width:64px;margin-left:6px"></label>
+            </div>
+            <textarea id="riskCauses" placeholder="Causes (semicolon separated)"></textarea>
+            <textarea id="riskConsq" placeholder="Consequences (semicolon separated)"></textarea>
+            <textarea id="riskPre" placeholder="Preventive controls"></textarea>
+            <textarea id="riskPost" placeholder="Mitigating controls"></textarea>
+            <div class="row">
+              <button id="addRisk" class="btn small">Add</button>
+              <button id="clearRisks" class="btn small ghost">Clear</button>
+            </div>
           </div>
           <div>
-            <label class="block text-sm font-medium">Actor</label>
-            <input id="implActor" class="w-full mt-1 p-2 border rounded" placeholder="Agency or unit" />
+            <h3>Heatmap</h3>
+            <canvas id="riskMap" width="520" height="420"></canvas>
           </div>
           <div>
-            <label class="block text-sm font-medium">Timeline</label>
-            <input id="implTime" class="w-full mt-1 p-2 border rounded" placeholder="Q1 2026" />
-          </div>
-          <div>
-            <button id="addImpl" class="w-full px-3 py-2 bg-blue-600 text-white rounded">Add</button>
+            <h3>Bow-Tie</h3>
+            <div id="bowtie" class="grid two" style="gap:6px">
+              <div>
+                <div class="badge">Causes</div>
+                <ul id="btLeft" class="hint" style="min-height:120px;margin:6px 0 10px 16px"></ul>
+                <div class="badge">Preventive</div>
+                <ul id="btPre" class="hint" style="min-height:80px;margin:6px 0 10px 16px"></ul>
+              </div>
+              <div>
+                <div class="badge">Consequences</div>
+                <ul id="btRight" class="hint" style="min-height:120px;margin:6px 0 10px 16px"></ul>
+                <div class="badge">Mitigating</div>
+                <ul id="btPost" class="hint" style="min-height:80px;margin:6px 0 10px 16px"></ul>
+              </div>
+            </div>
+            <div class="hint">Click a dot on the heatmap to preview its bow-tie here.</div>
           </div>
         </div>
-        <div class="overflow-x-auto mt-3">
-          <table class="w-full text-sm border">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Task</th>
-                <th class="p-2 border">Actor</th>
-                <th class="p-2 border">Timeline</th>
-                <th class="p-2 border">Remove</th>
-              </tr>
-            </thead>
-            <tbody id="implTable"></tbody>
-          </table>
-        </div>
-        <div class="bg-gray-50 rounded border p-2 mt-3">
-          <div class="text-sm font-medium">Quarter timeline</div>
-          <canvas id="implViz" width="900" height="160" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
-          <p class="text-xs text-gray-600 mt-1">Parses tokens like Q1 2026, Q3 2025. Bars show task counts by quarter.</p>
-        </div>
-        <label class="block text-sm font-medium mt-4">Resources or budget notes</label>
-        <textarea id="resources" class="w-full mt-1 p-2 border rounded h-20" placeholder="Optional"></textarea>
       </div>
     </section>
 
-    <section id="panel-7" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-2">Monitoring and Adaptation</h2>
-        <div class="grid sm:grid-cols-4 gap-2 items-end">
-          <div>
-            <label class="block text-sm font-medium">Metric</label>
-            <input id="metricName" class="w-full mt-1 p-2 border rounded" placeholder="Example: Switching costs index" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Method</label>
-            <input id="metricMethod" class="w-full mt-1 p-2 border rounded" placeholder="Survey, audit, API logs" />
-          </div>
-          <div>
-            <label class="block text-sm font-medium">Frequency</label>
-            <input id="metricFreq" class="w-full mt-1 p-2 border rounded" placeholder="Quarterly" />
-          </div>
-          <div>
-            <button id="addMetric" class="w-full px-3 py-2 bg-blue-600 text-white rounded">Add</button>
-          </div>
+    <section class="card" id="panel-capacity" style="display:none">
+      <div class="panel">
+        <h2>Institutional Capacity Heatmap</h2>
+        <div class="hint">Click cells to cycle 0–5. Colors show readiness. Summary bars at right.</div>
+        <div class="divider"></div>
+        <div class="row">
+          <input id="agencyName" type="text" placeholder="Add agency (Enter)" />
+          <input id="capName" type="text" placeholder="Add capability (Enter)" />
+          <button id="resetCap" class="btn small ghost">Reset matrix</button>
         </div>
-        <div class="overflow-x-auto mt-3">
-          <table class="w-full text-sm border">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Metric</th>
-                <th class="p-2 border">Method</th>
-                <th class="p-2 border">Frequency</th>
-                <th class="p-2 border">Remove</th>
-              </tr>
-            </thead>
-            <tbody id="metricTable"></tbody>
-          </table>
+        <div id="capTableWrap" class="panel" style="padding:0;margin-top:8px">
+          <div id="capTable" class="hint" style="padding:10px">Add at least one agency and capability.</div>
         </div>
-        <label class="block text-sm font-medium mt-4">Adaptive governance and sunset clauses</label>
-        <textarea id="adaptiveNotes" class="w-full mt-1 p-2 border rounded h-20" placeholder="Feedback loops, review triggers, sunset timelines"></textarea>
       </div>
     </section>
 
-    <section id="panel-8" class="panel space-y-4 hidden">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-xl font-semibold mb-3">Synthesis</h2>
-        <p class="text-sm text-gray-700">Click compile to generate a formatted proposal. You can edit in place, copy, print, or export as Markdown.</p>
-        <div class="flex flex-wrap gap-2 mb-3">
-          <button id="compileBtn" class="px-3 py-2 bg-blue-600 text-white rounded">Compile proposal</button>
-          <button id="exportMd" class="px-3 py-2 bg-emerald-600 text-white rounded">Export Markdown</button>
-          <button id="printDoc" class="px-3 py-2 bg-gray-800 text-white rounded">Print</button>
-          <button id="resetAll" class="px-3 py-2 bg-red-600 text-white rounded">Reset</button>
-          <button id="exportJson" class="px-3 py-2 bg-indigo-600 text-white rounded">Export JSON</button>
-          <button id="importJsonBtn" class="px-3 py-2 bg-white border rounded">Import JSON</button>
-          <input id="importJsonFile" type="file" accept="application/json" class="hidden" />
+    <section class="card" id="panel-synth" style="display:none">
+      <div class="panel">
+        <h2>Synthesis</h2>
+        <div class="hint">Compile a concise summary across tools. Edit in place. Export Markdown.</div>
+        <div class="divider"></div>
+        <div class="row">
+          <button id="compile" class="btn small">Compile</button>
+          <button id="exportMd" class="btn small ghost">Export Markdown</button>
         </div>
-        <article id="output" class="prose max-w-none bg-gray-50 p-4 rounded border min-h-[20rem]" contenteditable="true"></article>
+        <article id="output" class="mono" contenteditable="true" style="margin-top:8px;white-space:pre-wrap;background:#0c1428;border:1px solid #223456;border-radius:12px;padding:12px;min-height:220px"></article>
       </div>
     </section>
-
-    <!-- Footer save status -->
-    <footer class="mt-6 text-xs text-gray-500 flex items-center justify-between">
-      <span id="saveStatus">Autosaved</span>
-      <div class="flex gap-2">
-        <button id="saveNow" class="px-2 py-1 border rounded bg-white">Save now</button>
-        <button id="loadNow" class="px-2 py-1 border rounded bg-white">Load saved</button>
-      </div>
-    </footer>
-  </div>
+  </main>
 
   <script>
-    // Simple state
-    const state = {
-      scenarioTitle: "", scenarioBrief: "", domain: "Digital markets and competition",
-      problemStatement: "", symptoms: "", rootCauses: "", legalBaselines: "",
-      stakeholders: [], // {name, role, interest, interestScore(1-5), powerScore(1-5)}
-      objectives: "", constraints: "", principles: "",
-      instruments: [], // {name, why, eff, fea}
-      implementation: [], // {task, actor, time}
-      resources: "",
-      metrics: [], // {name, method, freq}
-      adaptiveNotes: ""
-    };
+  // --------------------------- Global State ---------------------------
+  const state = {
+    meta:{title:"", brief:"", domain:"Digital markets and competition"},
+    mcda:{criteria:[
+      {name:"Effectiveness", w:30},
+      {name:"Feasibility", w:20},
+      {name:"Cost efficiency", w:20},
+      {name:"Rights impact", w:15},
+      {name:"Competition impact", w:10},
+      {name:"Admin burden", w:5}
+    ], instruments:[]},
+    causal:{nodes:[], links:[]}, // node {id,x,y,text,type}, link {a,b}
+    risks:[], // {id,title,lik,imp,causes[],consq[],pre[],post[]}
+    cap:{agencies:["Regulator","Data Protection Authority"], caps:["Staffing","IT systems","Legal powers","Budget"], levels:[]}
+  };
+  function autosave(){
+    localStorage.setItem("policylab_min_v2", JSON.stringify(state));
+    document.getElementById("saveStatus").textContent="Autosaved";
+  }
+  (function restore(){
+    const raw=localStorage.getItem("policylab_min_v2"); if(!raw) return;
+    try{ const s=JSON.parse(raw); Object.assign(state,s); }catch{}
+  })();
 
-    // Helpers
-    const $ = (id) => document.getElementById(id);
-    const panels = [...document.querySelectorAll(".panel")];
-    const stepBtns = [...document.querySelectorAll(".step-btn")];
-
-    function showStep(n) {
-      panels.forEach((p, i) => p.classList.toggle("hidden", i !== n - 1));
-      stepBtns.forEach((b) => b.classList.remove("bg-blue-50", "border-blue-600"));
-      document.querySelector(\`.step-btn[data-step="\${n}"]\`).classList.add("bg-blue-50", "border-blue-600");
-      $("progressBar").style.width = completionPercent() + "%";
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-    stepBtns.forEach((b) => b.addEventListener("click", () => showStep(parseInt(b.dataset.step))));
-
-    // Bind inputs
-    const bindings = [
-      ["scenarioTitle","scenarioTitle"],["scenarioBrief","scenarioBrief"],["domain","domain"],
-      ["problemStatement","problemStatement"],["symptoms","symptoms"],["rootCauses","rootCauses"],["legalBaselines","legalBaselines"],
-      ["objectives","objectives"],["constraints","constraints"],["principles","principles"],
-      ["resources","resources"],["adaptiveNotes","adaptiveNotes"]
-    ];
-    bindings.forEach(([id, key]) => {
-      $(id).addEventListener("input", e => { state[key] = e.target.value; autosave(); renderBadges(); });
+  // --------------------------- Nav switching ---------------------------
+  const panels = ["mcda","causal","risk","capacity","synth"];
+  document.querySelectorAll('nav .btn').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      const id=b.dataset.panel;
+      panels.forEach(p=> document.getElementById("panel-"+p).style.display = (p===id)? "block":"none");
     });
+  });
 
-    // Stakeholders
-    $("stakeInterestScore").addEventListener("input", e=> $("stakeInterestView").textContent = e.target.value);
-    $("stakePowerScore").addEventListener("input", e=> $("stakePowerView").textContent = e.target.value);
+  // --------------------------- Meta bindings ---------------------------
+  const titleEl = document.getElementById('scenarioTitle');
+  const briefEl = document.getElementById('scenarioBrief');
+  const domainEl = document.getElementById('domain');
+  titleEl.value = state.meta.title||"";
+  briefEl.value = state.meta.brief||"";
+  domainEl.value = state.meta.domain||"Digital markets and competition";
+  titleEl.addEventListener('input', e=>{ state.meta.title=e.target.value; autosave(); });
+  briefEl.addEventListener('input', e=>{ state.meta.brief=e.target.value; autosave(); });
+  domainEl.addEventListener('input', e=>{ state.meta.domain=e.target.value; autosave(); });
 
-    function renderStakeholders() {
-      const tbody = $("stakeTable");
-      tbody.innerHTML = "";
-      state.stakeholders.forEach((s, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="p-2 border">${escapeHtml(s.name)}</td>
-          <td class="p-2 border">${escapeHtml(s.role)}</td>
-          <td class="p-2 border">${escapeHtml(s.interest)}</td>
-          <td class="p-2 border text-center">${s.interestScore}</td>
-          <td class="p-2 border text-center">${s.powerScore}</td>
-          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
-        tbody.appendChild(tr);
+  // --------------------------- MCDA ---------------------------
+  const critList = document.getElementById('critList');
+  const insScores = document.getElementById('insScores');
+  const insList = document.getElementById('insList');
+  const rankCv = document.getElementById('mcdaRank').getContext('2d');
+  const tornCv = document.getElementById('mcdaTornado').getContext('2d');
+
+  function renderCriteria(){
+    critList.innerHTML='';
+    state.mcda.criteria.forEach((c,i)=>{
+      const row=document.createElement('div');
+      row.className='kv';
+      row.innerHTML = `<input type="text" value="${c.name}" data-i="${i}" class="crit-name">
+                       <input type="number" min="0" max="100" value="${c.w}" data-i="${i}" class="crit-weight">`;
+      critList.appendChild(row);
+    });
+    critList.querySelectorAll('.crit-name').forEach(el=> el.addEventListener('input', e=>{
+      const i=+e.target.dataset.i; state.mcda.criteria[i].name=e.target.value; renderInsScoreInputs(); drawMCDA(); autosave();
+    }));
+    critList.querySelectorAll('.crit-weight').forEach(el=> el.addEventListener('input', e=>{
+      const i=+e.target.dataset.i; state.mcda.criteria[i].w=Math.max(0,Math.min(100, +e.target.value||0)); drawMCDA(); autosave();
+    }));
+    renderInsScoreInputs();
+  }
+  function renderInsScoreInputs(){
+    insScores.innerHTML='';
+    state.mcda.criteria.forEach((c,i)=>{
+      const wrap=document.createElement('div'); wrap.className='kv';
+      wrap.innerHTML=`<label class="hint">${c.name}</label>
+                      <input type="number" min="1" max="5" value="3" data-i="${i}" class="ins-score">`;
+      insScores.appendChild(wrap);
+    });
+  }
+  function renderInstruments(){
+    insList.innerHTML='';
+    state.mcda.instruments.forEach((ins,idx)=>{
+      const box=document.createElement('div');
+      box.className='panel'; box.style.padding='10px';
+      const sPreview = state.mcda.criteria.map((c,i)=> `${c.name}: ${ins.scores[i]??3}/5`).join(' | ');
+      box.innerHTML = `<div class="row"><strong>${ins.name}</strong><span class="hint">• ${ins.why||''}</span><span class="right"><button class="btn small ghost" data-del="${idx}">Remove</button></span></div>
+                       <div class="hint" style="margin-top:6px">${sPreview}</div>`;
+      insList.appendChild(box);
+    });
+    insList.querySelectorAll('[data-del]').forEach(b=> b.addEventListener('click', ()=>{
+      state.mcda.instruments.splice(+b.dataset.del,1); renderInstruments(); drawMCDA(); autosave();
+    }));
+  }
+  function normWeights(){
+    const sum = state.mcda.criteria.reduce((a,c)=>a+(+c.w||0),0)||1;
+    return state.mcda.criteria.map(c=> (+c.w||0)/sum);
+  }
+  function computeScores(){
+    const W = normWeights();
+    return state.mcda.instruments.map(ins=>{
+      const s = state.mcda.criteria.map((_,i)=> (+ins.scores[i]||0));
+      const z = s.reduce((a,si,i)=> a + W[i]*(si/5), 0);
+      return {name:ins.name, score:z, why:ins.why||''};
+    }).sort((a,b)=> b.score-a.score);
+  }
+  function drawBars(ctx, items, color="#7fb3ff"){
+    ctx.clearRect(0,0,ctx.canvas.width,ctx.canvas.height);
+    const W=ctx.canvas.width, H=ctx.canvas.height, pad=36;
+    const max = Math.max(0.01, ...items.map(x=>x.score||x.weight));
+    const bw = Math.max(10, (H-2*pad)/items.length - 8);
+    items.forEach((it,idx)=>{
+      const y = pad + idx*((H-2*pad)/items.length);
+      const w = (W-2*pad) * ((it.score||it.weight)/max);
+      ctx.fillStyle=color; ctx.fillRect(pad, y, w, bw);
+      ctx.fillStyle="#a9b6cf"; ctx.font="12px Inter"; ctx.fillText(it.name, pad, y-4);
+      ctx.fillStyle=varInk(); ctx.font="12px Inter";
+      ctx.fillText(((it.score||it.weight)*100).toFixed(0), pad+w+6, y+bw-2);
+    });
+  }
+  function varInk(){ return getComputedStyle(document.documentElement).getPropertyValue('--ink') || '#e6eefc'; }
+  function drawMCDA(){
+    const scores = computeScores();
+    drawBars(rankCv, scores.map(s=>({name:s.name, score:s.score})), "#7fb3ff");
+    const W = normWeights();
+    const items = state.mcda.criteria.map((c,i)=> ({name:c.name, weight:W[i]})).sort((a,b)=>b.weight-a.weight);
+    drawBars(tornCv, items, "#ffd166");
+  }
+  document.getElementById('addCrit').addEventListener('click', ()=>{
+    state.mcda.criteria.push({name:"New criterion", w:10}); renderCriteria(); drawMCDA(); autosave();
+  });
+  document.getElementById('resetCrit').addEventListener('click', ()=>{
+    state.mcda.criteria=[{name:"Effectiveness",w:30},{name:"Feasibility",w:20},{name:"Cost efficiency",w:20},{name:"Rights impact",w:15},{name:"Competition impact",w:10},{name:"Admin burden",w:5}];
+    renderCriteria(); drawMCDA(); autosave();
+  });
+  document.getElementById('addIns').addEventListener('click', ()=>{
+    const name = document.getElementById('insName').value.trim(); if(!name) return;
+    const why = document.getElementById('insWhy').value.trim();
+    const scores = Array.from(document.querySelectorAll('.ins-score')).map(el=> Math.max(1,Math.min(5, +el.value||3)));
+    state.mcda.instruments.push({name, why, scores});
+    document.getElementById('insName').value=''; document.getElementById('insWhy').value='';
+    renderInstruments(); drawMCDA(); autosave();
+  });
+  document.getElementById('clearIns').addEventListener('click', ()=>{ state.mcda.instruments=[]; renderInstruments(); drawMCDA(); autosave(); });
+
+  renderCriteria(); renderInstruments(); drawMCDA();
+
+  // --------------------------- Causal Map ---------------------------
+  const stage = document.getElementById('mapStage');
+  const svg = document.getElementById('mapSVG');
+  let linkMode=false, linkFrom=null, drag=null, dragOff={x:0,y:0};
+  function addNode(text,type,x=40,y=40){
+    const id = crypto.randomUUID();
+    const el = document.createElement('div'); el.className=`node type-${type}`; el.textContent=text;
+    el.style.left=x+'px'; el.style.top=y+'px'; el.dataset.id=id; el.dataset.type=type;
+    el.addEventListener('mousedown', e=>{ drag=el; const r=el.getBoundingClientRect(), s=stage.getBoundingClientRect(); dragOff.x=e.clientX-r.left; dragOff.y=e.clientY-r.top; e.preventDefault(); });
+    el.addEventListener('click', e=>{
+      if(linkMode){
+        if(!linkFrom){ linkFrom=el; el.style.outline='2px solid #7fb3ff'; }
+        else if(linkFrom!==el){ linkFrom.style.outline=''; state.causal.links.push({a:linkFrom.dataset.id, b:el.dataset.id}); linkFrom=null; drawLinks(); autosave(); }
+      }
+    });
+    stage.appendChild(el);
+    state.causal.nodes.push({id,text,type,x,y});
+    drawLinks(); autosave();
+  }
+  function drawLinks(){
+    svg.innerHTML = `<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#7fb3ff"/></marker></defs>`;
+    state.causal.links.forEach(L=>{
+      const A = stage.querySelector(`[data-id="${L.a}"]`);
+      const B = stage.querySelector(`[data-id="${L.b}"]`);
+      if(!A||!B) return;
+      const ar = A.getBoundingClientRect(), br=B.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+      const ax = ar.left - sr.left + ar.width/2, ay = ar.top - sr.top + ar.height/2;
+      const bx = br.left - sr.left + br.width/2, by = br.top - sr.top + br.height/2;
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', ax); line.setAttribute('y1', ay); line.setAttribute('x2', bx); line.setAttribute('y2', by);
+      line.setAttribute('stroke', '#7fb3ff'); line.setAttribute('stroke-width','2'); line.setAttribute('marker-end','url(#arrow)');
+      svg.appendChild(line);
+    });
+  }
+  stage.addEventListener('mousemove', e=>{
+    if(!drag) return;
+    const r=stage.getBoundingClientRect();
+    const x = Math.max(10, Math.min(r.width-80, e.clientX - r.left - dragOff.x));
+    const y = Math.max(10, Math.min(r.height-34, e.clientY - r.top - dragOff.y));
+    drag.style.left=x+'px'; drag.style.top=y+'px';
+    const id=drag.dataset.id; const n=state.causal.nodes.find(n=>n.id===id); if(n){ n.x=x; n.y=y; }
+    drawLinks();
+  });
+  window.addEventListener('mouseup', ()=>{ drag=null; autosave(); });
+
+  document.getElementById('addNode').addEventListener('click', ()=>{
+    const t=document.getElementById('nodeText').value.trim(); if(!t) return;
+    const type=document.getElementById('nodeType').value;
+    addNode(t,type, 40+Math.random()*200, 40+Math.random()*200);
+    document.getElementById('nodeText').value='';
+  });
+  document.getElementById('linkMode').addEventListener('click', ()=>{
+    linkMode=!linkMode; linkFrom=null; document.getElementById('mapStatus').textContent = linkMode? "linking…" : "idle";
+    stage.querySelectorAll('.node').forEach(n=> n.style.outline='');
+  });
+  document.getElementById('clearMap').addEventListener('click', ()=>{
+    state.causal.nodes=[]; state.causal.links=[]; stage.querySelectorAll('.node').forEach(n=>n.remove()); drawLinks(); autosave();
+  });
+  document.getElementById('exportMap').addEventListener('click', ()=>{
+    const data = JSON.stringify(state.causal,null,2);
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([data],{type:'application/json'})); a.download='causal-map.json'; a.click();
+  });
+  document.getElementById('importMap').addEventListener('click', ()=> document.getElementById('importMapFile').click());
+  document.getElementById('importMapFile').addEventListener('change', ()=>{
+    const f=document.getElementById('importMapFile').files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=e=>{ try{
+      const obj=JSON.parse(e.target.result); state.causal=obj||{nodes:[],links:[]};
+      // rebuild
+      stage.querySelectorAll('.node').forEach(n=>n.remove());
+      (state.causal.nodes||[]).forEach(n=> addNode(n.text,n.type,n.x,n.y));
+      state.causal.links = (obj.links||[]); drawLinks(); autosave();
+    }catch{ alert('Invalid map JSON'); }};
+    r.readAsText(f);
+  });
+
+  // --------------------------- Risk ---------------------------
+  const riskMap = document.getElementById('riskMap').getContext('2d');
+  function drawRiskMap(){
+    const ctx=riskMap, W=ctx.canvas.width, H=ctx.canvas.height, pad=40;
+    ctx.clearRect(0,0,W,H);
+    // grid 5x5
+    for(let i=0;i<=5;i++){
+      const x=pad+i*(W-2*pad)/5, y=pad+i*(H-2*pad)/5;
+      ctx.strokeStyle="#1e2a44"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+      ctx.beginPath(); ctx.moveTo(x,pad); ctx.lineTo(x,H-pad); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(pad,y); ctx.lineTo(W-pad,y); ctx.stroke();
+    }
+    ctx.fillStyle="#a9b6cf"; ctx.font="12px Inter"; ctx.fillText("Likelihood →", W/2-38, H-10);
+    ctx.save(); ctx.translate(14,H/2+26); ctx.rotate(-Math.PI/2); ctx.fillText("Impact ↑",0,0); ctx.restore();
+
+    // points
+    state.risks.forEach(r=>{
+      const x = pad + (r.lik-0.5)*(W-2*pad)/5;
+      const y = H-pad - (r.imp-0.5)*(H-2*pad)/5;
+      const color = r.lik*r.imp>=16 ? "#ef4444" : r.lik*r.imp>=9 ? "#f59e0b" : "#22c55e";
+      ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,7,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle="#a9b6cf"; ctx.fillText(r.title.slice(0,18), x+10, y+4);
+    });
+  }
+  function refreshBowTie(r){
+    const toList = (id, arr)=> document.getElementById(id).innerHTML = (arr||[]).map(x=> `<li>${x}</li>`).join('');
+    toList('btLeft', r.causes||[]); toList('btRight', r.consq||[]);
+    toList('btPre', r.pre||[]); toList('btPost', r.post||[]);
+  }
+  document.getElementById('addRisk').addEventListener('click', ()=>{
+    const title=document.getElementById('riskTitle').value.trim(); if(!title) return;
+    const lik=Math.max(1,Math.min(5, +document.getElementById('riskLik').value||3));
+    const imp=Math.max(1,Math.min(5, +document.getElementById('riskImp').value||3));
+    const causes=(document.getElementById('riskCauses').value||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const consq=(document.getElementById('riskConsq').value||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const pre=(document.getElementById('riskPre').value||'').split(';').map(s=>s.trim()).filter(Boolean);
+    const post=(document.getElementById('riskPost').value||'').split(';').map(s=>s.trim()).filter(Boolean);
+    state.risks.push({id:crypto.randomUUID(), title, lik, imp, causes, consq, pre, post});
+    ['riskTitle','riskCauses','riskConsq','riskPre','riskPost'].forEach(id=> document.getElementById(id).value='');
+    drawRiskMap(); autosave();
+  });
+  document.getElementById('clearRisks').addEventListener('click', ()=>{ state.risks=[]; drawRiskMap(); autosave(); });
+  // click to show bow-tie
+  document.getElementById('riskMap').addEventListener('click', (e)=>{
+    const rect=e.target.getBoundingClientRect(), x=e.clientX-rect.left, y=e.clientY-rect.top;
+    const ctx=riskMap, W=ctx.canvas.width, H=ctx.canvas.height, pad=40;
+    const hit = state.risks.find(r=>{
+      const rx=pad + (r.lik-0.5)*(W-2*pad)/5;
+      const ry=H-pad - (r.imp-0.5)*(H-2*pad)/5;
+      return Math.hypot(rx - x*(W/rect.width), ry - y*(H/rect.height)) < 10;
+    });
+    if(hit) refreshBowTie(hit);
+  });
+  drawRiskMap();
+
+  // --------------------------- Capacity Heatmap ---------------------------
+  const agencyEl=document.getElementById('agencyName');
+  const capEl=document.getElementById('capName');
+  const wrap=document.getElementById('capTable');
+  function ensureMatrix(){
+    const R=state.cap.agencies.length, C=state.cap.caps.length;
+    if(!Array.isArray(state.cap.levels)) state.cap.levels=[];
+    for(let i=0;i<R;i++){ if(!Array.isArray(state.cap.levels[i])) state.cap.levels[i]=[]; for(let j=0;j<C;j++){ if(typeof state.cap.levels[i][j]!=='number') state.cap.levels[i][j]=0; } }
+  }
+  function colorFor(v){ const g = ['#0c1428','#163459','#1f5a7a','#2b7a5f','#3fa34d','#63c74d']; return g[Math.max(0,Math.min(5,v))]; }
+  function renderCap(){
+    ensureMatrix();
+    if(!state.cap.agencies.length || !state.cap.caps.length){ wrap.textContent="Add at least one agency and capability."; return; }
+    let html = `<table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left;padding:8px;border-bottom:1px solid #223456">Agency</th>`;
+    state.cap.caps.forEach(c=> html+= `<th style="padding:8px;border-bottom:1px solid #223456;text-align:center">${c}</th>`);
+    html += `<th style="padding:8px;border-bottom:1px solid #223456;text-align:center">Readiness</th></tr></thead><tbody>`;
+    state.cap.agencies.forEach((a,i)=>{
+      html += `<tr><td style="padding:8px;border-bottom:1px solid #223456">${a}</td>`;
+      state.cap.caps.forEach((_,j)=>{
+        const v=state.cap.levels[i][j]||0;
+        html += `<td data-i="${i}" data-j="${j}" style="padding:8px;border-bottom:1px solid #223456;text-align:center">
+                   <div style="width:36px;height:18px;margin:0 auto;border:1px solid #1f2b47;border-radius:6px;background:${colorFor(v)}">${v}</div>
+                 </td>`;
       });
-      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.stakeholders.splice(i,1); renderStakeholders(); drawStakeViz(); autosave(); renderBadges();
-      }));
-    }
-    $("addStakeholder").addEventListener("click", () => {
-      const name = $("stakeName").value.trim();
-      const role = $("stakeRole").value.trim();
-      const interest = $("stakeInterest").value.trim();
-      const interestScore = parseInt($("stakeInterestScore").value,10)||3;
-      const powerScore = parseInt($("stakePowerScore").value,10)||3;
-      if (!name) return;
-      state.stakeholders.push({ name, role, interest, interestScore, powerScore });
-      ["stakeName","stakeRole","stakeInterest"].forEach(id => $(id).value = "");
-      renderStakeholders(); drawStakeViz(); autosave(); renderBadges();
+      const avg = Math.round(100*(state.cap.levels[i].reduce((a,b)=>a+(b||0),0)/(state.cap.caps.length*5 || 1)));
+      html += `<td style="padding:8px;border-bottom:1px solid #223456;text-align:center"><span class="badge">${avg}%</span></td></tr>`;
     });
-
-    // Instruments
-    $("effScore").addEventListener("input", e=> $("effView").textContent = e.target.value);
-    $("feaScore").addEventListener("input", e=> $("feaView").textContent = e.target.value);
-
-    function renderInstruments() {
-      const ul = $("instrumentList");
-      ul.innerHTML = "";
-      state.instruments.forEach((ins, i) => {
-        const li = document.createElement("li");
-        li.className = "border rounded p-2 flex items-start justify-between gap-3 bg-white";
-        li.innerHTML = `
-          <div>
-            <div class="font-medium">${escapeHtml(ins.name)} <span class="text-xs text-gray-500">[Eff ${ins.eff}/5 • Fea ${ins.fea}/5]</span></div>
-            <div class="text-sm text-gray-700">${escapeHtml(ins.why)}</div>
-          </div>
-          <button data-i="${i}" class="text-red-600 underline">Remove</button>`;
-        ul.appendChild(li);
-      });
-      ul.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.instruments.splice(i,1); renderInstruments(); drawInstViz(); autosave(); renderBadges();
-      }));
-    }
-    $("addInstrument").addEventListener("click", () => {
-      const name = $("instrumentPick").value;
-      const why = $("instrumentWhy").value.trim();
-      const eff = parseInt($("effScore").value,10)||3;
-      const fea = parseInt($("feaScore").value,10)||3;
-      if (!name) return;
-      state.instruments.push({ name, why, eff, fea });
-      $("instrumentWhy").value = "";
-      renderInstruments(); drawInstViz(); autosave(); renderBadges();
+    html += `</tbody></table>`;
+    wrap.innerHTML=html;
+    wrap.querySelectorAll('td[data-i]').forEach(td=>{
+      td.addEventListener('click', ()=>{
+        const i=+td.dataset.i, j=+td.dataset.j;
+        state.cap.levels[i][j] = ((state.cap.levels[i][j]||0)+1)%6;
+        renderCap(); autosave();
+      })
     });
+  }
+  if(!state.cap.levels.length) ensureMatrix();
+  renderCap();
+  agencyEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const v=agencyEl.value.trim(); if(!v) return; state.cap.agencies.push(v); agencyEl.value=''; renderCap(); autosave(); } });
+  capEl.addEventListener('keydown', e=>{ if(e.key==='Enter'){ const v=capEl.value.trim(); if(!v) return; state.cap.caps.push(v); capEl.value=''; renderCap(); autosave(); } });
+  document.getElementById('resetCap').addEventListener('click', ()=>{ state.cap.levels=[]; renderCap(); autosave(); });
 
-    // Implementation
-    function renderImpl() {
-      const tbody = $("implTable");
-      tbody.innerHTML = "";
-      state.implementation.forEach((r, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="p-2 border">${escapeHtml(r.task)}</td>
-          <td class="p-2 border">${escapeHtml(r.actor)}</td>
-          <td class="p-2 border">${escapeHtml(r.time)}</td>
-          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
-        tbody.appendChild(tr);
-      });
-      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.implementation.splice(i,1); renderImpl(); drawImplViz(); autosave(); renderBadges();
-      }));
-    }
-    $("addImpl").addEventListener("click", () => {
-      const task = $("implTask").value.trim();
-      const actor = $("implActor").value.trim();
-      const time = $("implTime").value.trim();
-      if (!task) return;
-      state.implementation.push({ task, actor, time });
-      ["implTask","implActor","implTime"].forEach(id => $(id).value = "");
-      renderImpl(); drawImplViz(); autosave(); renderBadges();
-    });
+  // --------------------------- Synthesis ---------------------------
+  function compile(){
+    const scores = computeScores().slice(0,5).map(s=>`- ${s.name}: ${(s.score*100).toFixed(0)}`).join('\n');
+    const crit = state.mcda.criteria.map(c=>`- ${c.name}: ${c.w}`).join('\n');
+    const risks = state.risks.map(r=>`- ${r.title} (L${r.lik}×I${r.imp})`).join('\n') || "- none";
+    const cap = state.cap.agencies.map((a,i)=>{
+      const avg = Math.round(100*(state.cap.levels[i].reduce((a,b)=>a+(b||0),0)/(state.cap.caps.length*5 || 1)));
+      return `- ${a}: ${avg}%`;
+    }).join('\n') || "- none";
+    const causalNodes = state.causal.nodes.length;
+    const causalLinks = state.causal.links.length;
+    const md = `# ${state.meta.title || "Policy proposal"}
+Domain: ${state.meta.domain}
 
-    // Metrics
-    function renderMetrics() {
-      const tbody = $("metricTable");
-      tbody.innerHTML = "";
-      state.metrics.forEach((m, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td class="p-2 border">${escapeHtml(m.name)}</td>
-          <td class="p-2 border">${escapeHtml(m.method)}</td>
-          <td class="p-2 border">${escapeHtml(m.freq)}</td>
-          <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
-        tbody.appendChild(tr);
-      });
-      tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.metrics.splice(i,1); renderMetrics(); autosave(); renderBadges();
-      }));
-    }
-    $("addMetric").addEventListener("click", () => {
-      const name = $("metricName").value.trim();
-      const method = $("metricMethod").value.trim();
-      const freq = $("metricFreq").value.trim();
-      if (!name) return;
-      state.metrics.push({ name, method, freq });
-      ["metricName","metricMethod","metricFreq"].forEach(id => $(id).value = "");
-      renderMetrics(); autosave(); renderBadges();
-    });
+## Brief
+${state.meta.brief || "(add context)"}
 
-    // Compile Proposal
-    $("compileBtn").addEventListener("click", () => {
-      const md = compileMarkdown(state);
-      $("output").innerHTML = markdownToHtml(md);
-    });
+## MCDA
+Top instruments:
+${scores || "- none"}
 
-    // Export Markdown
-    $("exportMd").addEventListener("click", () => {
-      const md = compileMarkdown(state);
-      const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "PolicyProposal.md"; a.click();
-      URL.revokeObjectURL(url);
-    });
+Criteria weights:
+${crit}
 
-    // Print
-    $("printDoc").addEventListener("click", () => window.print());
+## Risk overview
+${risks}
 
-    // Export/Import JSON
-    $("exportJson").addEventListener("click", ()=>{
-      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
-      const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="PolicyLabState.json"; a.click();
-      URL.revokeObjectURL(a.href);
-    });
-    $("importJsonBtn").addEventListener("click", ()=> $("importJsonFile").click());
-    $("importJsonFile").addEventListener("change", ()=>{
-      const f=$("importJsonFile").files[0]; if(!f) return;
-      const r=new FileReader(); r.onload=e=>{ try{
-        const s=JSON.parse(e.target.result); Object.assign(state,s||{});
-        // rehydrate
-        bindings.forEach(([id,key])=> { if($(id)) $(id).value = state[key] || ""; });
-        renderStakeholders(); renderInstruments(); renderImpl(); renderMetrics();
-        drawStakeViz(); drawInstViz(); drawImplViz(); autosave(); renderBadges();
-        showStep(8);
-      }catch{ alert("Invalid JSON"); } };
-      r.readAsText(f);
-    });
+## Capacity snapshot
+${cap}
 
-    // Save and load
-    function autosave() {
-      localStorage.setItem("policylab_state_v1", JSON.stringify(state));
-      $("saveStatus").textContent = "Autosaved";
-      $("progressBar").style.width = completionPercent() + "%";
-    }
-    $("saveNow").addEventListener("click", autosave);
-    $("loadNow").addEventListener("click", loadSaved);
-
-    function loadSaved() {
-      const saved = localStorage.getItem("policylab_state_v1");
-      if (!saved) return;
-      const s = JSON.parse(saved);
-      Object.assign(state, s);
-      bindings.forEach(([id, key]) => { if ($(id)) $(id).value = state[key] || ""; });
-      renderStakeholders(); renderInstruments(); renderImpl(); renderMetrics();
-      drawStakeViz(); drawInstViz(); drawImplViz();
-      $("saveStatus").textContent = "Loaded";
-      renderBadges();
-    }
-
-    // Utils
-    function escapeHtml(str="") {
-      return str.replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
-    }
-
-    // Completion score (rough but useful)
-    function completionPercent(){
-      let score=0, total=8;
-      if(state.scenarioTitle && state.scenarioBrief) score++;
-      if(state.problemStatement && (state.symptoms||state.rootCauses)) score++;
-      if(state.stakeholders.length) score++;
-      if(state.objectives) score++;
-      if(state.instruments.length) score++;
-      if(state.implementation.length) score++;
-      if(state.metrics.length) score++;
-      if(true) score++; // synthesis always available
-      return Math.max(12.5, Math.round((score/total)*100));
-    }
-    function renderBadges(){
-      const set = (n, txt, ok)=> { const el=$("badge-"+n); el.textContent = txt; el.className = ok? "text-green-600" : "text-gray-400"; };
-      set(1, state.scenarioTitle? "✓" : "•", !!state.scenarioTitle);
-      set(2, state.problemStatement? "✓" : "•", !!state.problemStatement);
-      set(3, state.stakeholders.length? state.stakeholders.length : "0", !!state.stakeholders.length);
-      set(4, state.objectives? "✓" : "•", !!state.objectives);
-      set(5, state.instruments.length? state.instruments.length : "0", !!state.instruments.length);
-      set(6, state.implementation.length? state.implementation.length : "0", !!state.implementation.length);
-      set(7, state.metrics.length? state.metrics.length : "0", !!state.metrics.length);
-      set(8, "ready", true);
-      $("progressBar").style.width = completionPercent() + "%";
-    }
-
-    // Markdown compiler
-    function compileMarkdown(s) {
-      const stakeLines = s.stakeholders.map(x => `- ${x.name} | role ${x.role} | interests ${x.interest} | interest ${x.interestScore}/5 | power ${x.powerScore}/5`).join("\n");
-      const insLines = s.instruments.map(x => `- ${x.name}: ${x.why} (effectiveness ${x.eff}/5; feasibility ${x.fea}/5)`).join("\n");
-      const implLines = s.implementation.map(x => `- ${x.task} | ${x.actor} | ${x.time}`).join("\n");
-      const metricLines = s.metrics.map(x => `- ${x.name} | ${x.method} | ${x.freq}`).join("\n");
-
-      return `# ${s.scenarioTitle || "Policy Proposal"}
-Domain: ${s.domain}
-
-## Scenario Brief
-${s.scenarioBrief}
-
-## 1. Problem Framing
-**Problem statement**  
-${s.problemStatement}
-
-**Symptoms**  
-${s.symptoms}
-
-**Root causes**  
-${s.rootCauses}
-
-**Legal baselines or precedents**  
-${s.legalBaselines}
-
-## 2. Stakeholder Mapping
-${stakeLines || "- None added"}
-
-## 3. Objectives and Constraints
-**Objectives**  
-${s.objectives}
-
-**Constraints**  
-${s.constraints}
-
-**Design principles**  
-${s.principles}
-
-## 4. Policy Instruments
-${insLines || "- None added"}
-
-## 5. Implementation Plan
-${implLines || "- None added"}
-
-**Resources or budget notes**  
-${s.resources}
-
-## 6. Monitoring and Adaptation
-**Metrics**  
-${metricLines || "- None added"}
-
-**Adaptive governance and sunset**  
-${s.adaptiveNotes}
-
-## 7. Executive Summary
-Provide a 150 word summary here after review.
+## Causal map
+Nodes: ${causalNodes}, Links: ${causalLinks}
 `;
-    }
+    document.getElementById('output').textContent = md;
+  }
+  document.getElementById('compile').addEventListener('click', compile);
+  document.getElementById('exportMd').addEventListener('click', ()=>{
+    const md = document.getElementById('output').textContent || ''; 
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([md],{type:'text/markdown'})); a.download='PolicyLab_Summary.md'; a.click();
+  });
 
-    // Tiny Markdown to HTML for headings and simple lists
-    function markdownToHtml(md) {
-      let h = escapeHtml(md);
-      h = h.replace(/^### (.*)$/gm, "<h3 class='text-lg font-semibold mt-4 mb-2'>$1</h3>");
-      h = h.replace(/^## (.*)$/gm, "<h2 class='text-xl font-bold mt-6 mb-2'>$1</h2>");
-      h = h.replace(/^# (.*)$/gm, "<h1 class='text-2xl font-extrabold mt-2 mb-2'>$1</h1>");
-      h = h.replace(/^\- (.*)$/gm, "<li>$1</li>");
-      h = h.replace(/(<li>.*<\/li>)(\n<li>.*<\/li>)+/gs, match => `<ul class="list-disc pl-6 space-y-1">${match}</ul>`);
-      h = h.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-      h = h.replace(/\n\n/g, "<br><br>");
-      return h;
-    }
+  // --------------------------- Demo / Export / Import ---------------------------
+  document.getElementById('presetDigital').addEventListener('click', ()=>{
+    // MCDA sample
+    state.mcda.instruments = [
+      {name:"Conduct rules", why:"Platform fairness baseline", scores:[4,4,5,4,4,3]},
+      {name:"Data portability", why:"Lower switching costs", scores:[3,3,3,4,5,3]},
+      {name:"Functional separation", why:"Reduce leveraging", scores:[4,2,2,4,5,2]},
+      {name:"Targeted audits", why:"Detect dark patterns", scores:[3,4,4,3,3,4]}
+    ];
+    renderInstruments(); drawMCDA();
 
-    // ---- Visuals (no external libs) ----
-    function drawStakeViz(){
-      const c = $("stakeViz"); if(!c) return;
-      const ctx = c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
-      const W=c.width, H=c.height, pad=36;
-      // axes box
-      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
-      // grid labels
-      ctx.fillStyle="#6b7280"; ctx.font="12px ui-sans-serif";
-      ctx.fillText("Interest →", W/2-30, H-8);
-      ctx.save(); ctx.translate(12, H/2+30); ctx.rotate(-Math.PI/2); ctx.fillText("Power ↑",0,0); ctx.restore();
-      // quadrants
-      ctx.strokeStyle="#e5e7eb"; ctx.beginPath();
-      ctx.moveTo(W/2, pad); ctx.lineTo(W/2, H-pad);
-      ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2);
-      ctx.stroke();
-      // points
-      const X=(v)=> pad + (v-1)/4*(W-2*pad);
-      const Y=(v)=> H-pad - (v-1)/4*(H-2*pad);
-      state.stakeholders.forEach(s=>{
-        const x = X(s.interestScore||3), y = Y(s.powerScore||3);
-        ctx.fillStyle="#2563eb"; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle="#374151"; ctx.fillText(String(s.name).slice(0,22), x+8, y+4);
-      });
-    }
+    // Causal map sample
+    document.getElementById('clearMap').click();
+    addNode("Network effects","driver",80,70);
+    addNode("High switching costs","driver",80,170);
+    addNode("Conduct rules","policy",300,120);
+    addNode("Portability","policy",300,220);
+    addNode("Contestability ↑","outcome",540,120);
+    addNode("Consumer autonomy ↑","outcome",540,220);
+    state.causal.links.push(
+      {a:state.causal.nodes[0].id, b:state.causal.nodes[2].id},
+      {a:state.causal.nodes[1].id, b:state.causal.nodes[3].id},
+      {a:state.causal.nodes[2].id, b:state.causal.nodes[4].id},
+      {a:state.causal.nodes[3].id, b:state.causal.nodes[5].id}
+    ); drawLinks();
 
-    function drawInstViz(){
-      const c=$("instViz"); if(!c) return;
-      const ctx=c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
-      const W=c.width, H=c.height, pad=36;
-      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
-      ctx.strokeStyle="#e5e7eb"; ctx.beginPath();
-      ctx.moveTo(W/2, pad); ctx.lineTo(W/2, H-pad);
-      ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2);
-      ctx.stroke();
-      ctx.fillStyle="#6b7280"; ctx.font="12px ui-sans-serif";
-      ctx.fillText("Feasibility →", W/2-30, H-8);
-      ctx.save(); ctx.translate(12,H/2+30); ctx.rotate(-Math.PI/2); ctx.fillText("Effectiveness ↑",0,0); ctx.restore();
-      const X=(v)=> pad + (v-1)/4*(W-2*pad);
-      const Y=(v)=> H-pad - (v-1)/4*(H-2*pad);
-      state.instruments.forEach(ins=>{
-        const x=X(ins.fea||3), y=Y(ins.eff||3);
-        ctx.fillStyle="#10b981"; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-        ctx.fillStyle="#374151"; ctx.fillText(String(ins.name).slice(0,22), x+8, y+4);
-      });
-    }
+    // Risks sample
+    state.risks = [
+      {id:crypto.randomUUID(), title:"Regulatory capture", lik:3, imp:4, causes:["Lobbying"], consq:["Weak rules"], pre:["Cooling-off"], post:["Oversight"]},
+      {id:crypto.randomUUID(), title:"Under-enforcement", lik:4, imp:4, causes:["Capacity"], consq:["Non-compliance"], pre:["Budget"], post:["Audits"]},
+      {id:crypto.randomUUID(), title:"Over-blocking", lik:2, imp:3, causes:["Broad rules"], consq:["Innovation harm"], pre:["Sunset"], post:["Appeals"]}
+    ];
+    drawRiskMap(); refreshBowTie(state.risks[0]);
 
-    function parseQuarter(str){
-      // accepts "Q1 2026" etc.
-      const m = String(str).trim().match(/Q([1-4])\s+(\d{4})/i);
-      if(!m) return null;
-      const q = parseInt(m[1],10), y = parseInt(m[2],10);
-      return {q,y, key:`${y}-Q${q}`};
-    }
-    function drawImplViz(){
-      const c=$("implViz"); if(!c) return;
-      const ctx=c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
-      const W=c.width, H=c.height, pad=36;
-      const counts = {};
-      state.implementation.forEach(r=>{
-        const p=parseQuarter(r.time); if(p){ counts[p.key]=(counts[p.key]||0)+1; }
-      });
-      const keys = Object.keys(counts).sort((a,b)=>{
-        const [ay,aq]=a.split("-Q").map(Number); const [by,bq]=b.split("-Q").map(Number);
-        return ay===by? aq-bq : ay-by;
-      });
-      if(!keys.length){ ctx.fillStyle="#6b7280"; ctx.fillText("Add Qn YYYY to timelines to populate.", pad, pad+12); return; }
-      const max = Math.max(...keys.map(k=>counts[k]));
-      // axis
-      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
-      // bars
-      const bw = Math.max(10, (W-2*pad)/keys.length - 6);
-      keys.forEach((k,i)=>{
-        const x = pad + i*((W-2*pad)/keys.length) + 3;
-        const h = (H-2*pad)*(counts[k]/max);
-        ctx.fillStyle="#60a5fa"; ctx.fillRect(x, H-pad-h, bw, h);
-        if(keys.length<=12){ ctx.fillStyle="#6b7280"; ctx.font="10px ui-sans-serif"; ctx.fillText(k, x, H-pad+12); }
-      });
-    }
+    // Capacity sample
+    state.cap.agencies=["Regulator","Data Protection Authority","Competition Commission"];
+    state.cap.caps=["Staffing","IT systems","Legal powers","Budget","Regional presence"];
+    state.cap.levels=[
+      [3,3,4,3,2],
+      [2,4,3,2,2],
+      [4,3,4,3,2]
+    ];
+    renderCap();
 
-    // Init
-    function init(){
-      showStep(1);
-      loadSaved();
-      renderBadges();
-      drawStakeViz(); drawInstViz(); drawImplViz();
-    }
-    init();
+    // Meta
+    state.meta.title="Online platform conduct policy";
+    state.meta.brief="Draft to address consumer autonomy and contestability in digital marketplaces via conduct rules, data portability, and targeted audits.";
+    titleEl.value=state.meta.title; briefEl.value=state.meta.brief; domainEl.value=state.meta.domain;
+
+    autosave();
+  });
+
+  document.getElementById('exportJson').addEventListener('click', ()=>{
+    const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'})); a.download='PolicyLab_State.json'; a.click();
+  });
+  document.getElementById('importJson').addEventListener('click', ()=> document.getElementById('importFile').click());
+  document.getElementById('importFile').addEventListener('change', ()=>{
+    const f=document.getElementById('importFile').files[0]; if(!f) return;
+    const r=new FileReader(); r.onload=e=>{ try{
+      const s=JSON.parse(e.target.result); Object.assign(state,s||{});
+      // rehydrate UI
+      renderCriteria(); renderInstruments(); drawMCDA();
+      // map
+      stage.querySelectorAll('.node').forEach(n=>n.remove());
+      (state.causal.nodes||[]).forEach(n=> addNode(n.text,n.type,n.x,n.y));
+      drawLinks();
+      // risk
+      drawRiskMap();
+      // cap
+      renderCap();
+      // meta
+      titleEl.value=state.meta.title||''; briefEl.value=state.meta.brief||''; domainEl.value=state.meta.domain||domainEl.value;
+      autosave();
+    }catch{ alert('Invalid JSON'); } };
+    r.readAsText(f);
+  });
+
+  // default visible panel
+  document.querySelector('nav .btn[data-panel="mcda"]').click();
   </script>
 </body>
 </html>
