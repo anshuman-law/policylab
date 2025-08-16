@@ -5,6 +5,14 @@
   <title>PolicyLab | Interactive Policy Builder</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* simple print */
+    @media print {
+      nav, footer, #printDoc, #resetAll, #exportMd, #saveNow, #loadNow, #exportJson, #importJsonBtn { display:none !important; }
+      .shadow { box-shadow:none !important; }
+    }
+    canvas { image-rendering: crisp-edges; }
+  </style>
 </head>
 <body class="bg-gray-50 text-gray-900">
   <div class="max-w-6xl mx-auto p-4 sm:p-6">
@@ -20,14 +28,14 @@
 
     <!-- Stepper -->
     <nav class="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-6">
-      <button data-step="1" class="step-btn px-3 py-2 rounded border bg-white text-left">1. Briefing</button>
-      <button data-step="2" class="step-btn px-3 py-2 rounded border bg-white text-left">2. Problem</button>
-      <button data-step="3" class="step-btn px-3 py-2 rounded border bg-white text-left">3. Stakeholders</button>
-      <button data-step="4" class="step-btn px-3 py-2 rounded border bg-white text-left">4. Objectives</button>
-      <button data-step="5" class="step-btn px-3 py-2 rounded border bg-white text-left">5. Instruments</button>
-      <button data-step="6" class="step-btn px-3 py-2 rounded border bg-white text-left">6. Implementation</button>
-      <button data-step="7" class="step-btn px-3 py-2 rounded border bg-white text-left">7. Monitoring</button>
-      <button data-step="8" class="step-btn px-3 py-2 rounded border bg-white text-left">8. Synthesis</button>
+      <button data-step="1" class="step-btn px-3 py-2 rounded border bg-white text-left">1. Briefing <span class="text-xs ml-2" id="badge-1"></span></button>
+      <button data-step="2" class="step-btn px-3 py-2 rounded border bg-white text-left">2. Problem <span class="text-xs ml-2" id="badge-2"></span></button>
+      <button data-step="3" class="step-btn px-3 py-2 rounded border bg-white text-left">3. Stakeholders <span class="text-xs ml-2" id="badge-3"></span></button>
+      <button data-step="4" class="step-btn px-3 py-2 rounded border bg-white text-left">4. Objectives <span class="text-xs ml-2" id="badge-4"></span></button>
+      <button data-step="5" class="step-btn px-3 py-2 rounded border bg-white text-left">5. Instruments <span class="text-xs ml-2" id="badge-5"></span></button>
+      <button data-step="6" class="step-btn px-3 py-2 rounded border bg-white text-left">6. Implementation <span class="text-xs ml-2" id="badge-6"></span></button>
+      <button data-step="7" class="step-btn px-3 py-2 rounded border bg-white text-left">7. Monitoring <span class="text-xs ml-2" id="badge-7"></span></button>
+      <button data-step="8" class="step-btn px-3 py-2 rounded border bg-white text-left">8. Synthesis <span class="text-xs ml-2" id="badge-8"></span></button>
     </nav>
 
     <!-- Panels -->
@@ -77,24 +85,44 @@
           <input id="stakeName" class="p-2 border rounded" placeholder="Name or category" />
           <input id="stakeRole" class="p-2 border rounded" placeholder="Role or function" />
           <input id="stakeInterest" class="p-2 border rounded" placeholder="Interests" />
-          <input id="stakePower" class="p-2 border rounded" placeholder="Power or influence" />
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600">Interest</label>
+            <input id="stakeInterestScore" type="range" min="1" max="5" value="3" />
+            <span id="stakeInterestView" class="text-xs text-gray-700">3</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600">Power</label>
+            <input id="stakePowerScore" type="range" min="1" max="5" value="3" />
+            <span id="stakePowerView" class="text-xs text-gray-700">3</span>
+          </div>
           <button id="addStakeholder" class="px-3 py-2 bg-blue-600 text-white rounded">Add</button>
         </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm border">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Name</th>
-                <th class="p-2 border">Role</th>
-                <th class="p-2 border">Interests</th>
-                <th class="p-2 border">Power</th>
-                <th class="p-2 border">Remove</th>
-              </tr>
-            </thead>
-            <tbody id="stakeTable"></tbody>
-          </table>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="p-2 border">Name</th>
+                  <th class="p-2 border">Role</th>
+                  <th class="p-2 border">Interests</th>
+                  <th class="p-2 border">Interest</th>
+                  <th class="p-2 border">Power</th>
+                  <th class="p-2 border">Remove</th>
+                </tr>
+              </thead>
+              <tbody id="stakeTable"></tbody>
+            </table>
+          </div>
+          <div class="bg-gray-50 rounded border p-2">
+            <div class="flex items-center justify-between">
+              <div class="text-sm font-medium">Power–Interest map</div>
+              <div class="text-xs text-gray-500">Low to High</div>
+            </div>
+            <canvas id="stakeViz" width="520" height="360" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
+            <p class="text-xs text-gray-600 mt-1">Quadrants: Manage closely (high–high), Keep satisfied (high power, low interest), Keep informed (low power, high interest), Monitor (low–low).</p>
+          </div>
         </div>
-        <p class="text-xs text-gray-600 mt-2">Tip: include regulators, firms, consumer groups, civil society, technical bodies, standard setters, courts.</p>
       </div>
     </section>
 
@@ -113,7 +141,7 @@
     <section id="panel-5" class="panel space-y-4 hidden">
       <div class="bg-white p-4 rounded-xl shadow">
         <h2 class="text-xl font-semibold mb-3">Policy Instruments</h2>
-        <p class="text-sm text-gray-700 mb-2">Pick from the menu or add your own. Add justification for each selection.</p>
+        <p class="text-sm text-gray-700 mb-2">Score each instrument on effectiveness and feasibility to see its position in the matrix.</p>
         <div class="grid sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium">Instrument</label>
@@ -135,10 +163,28 @@
             <input id="instrumentWhy" class="w-full mt-1 p-2 border rounded" placeholder="How it aligns with objectives and stakeholder realities" />
           </div>
         </div>
-        <div class="flex gap-2 mt-3">
+        <div class="flex flex-wrap items-end gap-3 mt-2">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600">Effectiveness</label>
+            <input id="effScore" type="range" min="1" max="5" value="3" />
+            <span id="effView" class="text-xs text-gray-700">3</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-600">Feasibility</label>
+            <input id="feaScore" type="range" min="1" max="5" value="3" />
+            <span id="feaView" class="text-xs text-gray-700">3</span>
+          </div>
           <button id="addInstrument" class="px-3 py-2 bg-blue-600 text-white rounded">Add instrument</button>
         </div>
-        <ul id="instrumentList" class="mt-4 space-y-2"></ul>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-3">
+          <ul id="instrumentList" class="space-y-2"></ul>
+          <div class="bg-gray-50 rounded border p-2">
+            <div class="text-sm font-medium">Effectiveness–Feasibility matrix</div>
+            <canvas id="instViz" width="520" height="360" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
+            <p class="text-xs text-gray-600 mt-1">Top-right are promising quick wins; bottom-left are risky or weak.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -174,6 +220,11 @@
             </thead>
             <tbody id="implTable"></tbody>
           </table>
+        </div>
+        <div class="bg-gray-50 rounded border p-2 mt-3">
+          <div class="text-sm font-medium">Quarter timeline</div>
+          <canvas id="implViz" width="900" height="160" class="w-full h-auto mt-2 bg-white rounded border"></canvas>
+          <p class="text-xs text-gray-600 mt-1">Parses tokens like Q1 2026, Q3 2025. Bars show task counts by quarter.</p>
         </div>
         <label class="block text-sm font-medium mt-4">Resources or budget notes</label>
         <textarea id="resources" class="w-full mt-1 p-2 border rounded h-20" placeholder="Optional"></textarea>
@@ -227,6 +278,9 @@
           <button id="exportMd" class="px-3 py-2 bg-emerald-600 text-white rounded">Export Markdown</button>
           <button id="printDoc" class="px-3 py-2 bg-gray-800 text-white rounded">Print</button>
           <button id="resetAll" class="px-3 py-2 bg-red-600 text-white rounded">Reset</button>
+          <button id="exportJson" class="px-3 py-2 bg-indigo-600 text-white rounded">Export JSON</button>
+          <button id="importJsonBtn" class="px-3 py-2 bg-white border rounded">Import JSON</button>
+          <input id="importJsonFile" type="file" accept="application/json" class="hidden" />
         </div>
         <article id="output" class="prose max-w-none bg-gray-50 p-4 rounded border min-h-[20rem]" contenteditable="true"></article>
       </div>
@@ -247,12 +301,12 @@
     const state = {
       scenarioTitle: "", scenarioBrief: "", domain: "Digital markets and competition",
       problemStatement: "", symptoms: "", rootCauses: "", legalBaselines: "",
-      stakeholders: [],
+      stakeholders: [], // {name, role, interest, interestScore(1-5), powerScore(1-5)}
       objectives: "", constraints: "", principles: "",
-      instruments: [],
-      implementation: [],
+      instruments: [], // {name, why, eff, fea}
+      implementation: [], // {task, actor, time}
       resources: "",
-      metrics: [],
+      metrics: [], // {name, method, freq}
       adaptiveNotes: ""
     };
 
@@ -264,8 +318,8 @@
     function showStep(n) {
       panels.forEach((p, i) => p.classList.toggle("hidden", i !== n - 1));
       stepBtns.forEach((b) => b.classList.remove("bg-blue-50", "border-blue-600"));
-      document.querySelector(`.step-btn[data-step="${n}"]`).classList.add("bg-blue-50", "border-blue-600");
-      $("progressBar").style.width = `${n * 12.5}%`;
+      document.querySelector(\`.step-btn[data-step="\${n}"]\`).classList.add("bg-blue-50", "border-blue-600");
+      $("progressBar").style.width = completionPercent() + "%";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     stepBtns.forEach((b) => b.addEventListener("click", () => showStep(parseInt(b.dataset.step))));
@@ -278,10 +332,13 @@
       ["resources","resources"],["adaptiveNotes","adaptiveNotes"]
     ];
     bindings.forEach(([id, key]) => {
-      $(id).addEventListener("input", e => { state[key] = e.target.value; autosave(); });
+      $(id).addEventListener("input", e => { state[key] = e.target.value; autosave(); renderBadges(); });
     });
 
     // Stakeholders
+    $("stakeInterestScore").addEventListener("input", e=> $("stakeInterestView").textContent = e.target.value);
+    $("stakePowerScore").addEventListener("input", e=> $("stakePowerView").textContent = e.target.value);
+
     function renderStakeholders() {
       const tbody = $("stakeTable");
       tbody.innerHTML = "";
@@ -291,26 +348,31 @@
           <td class="p-2 border">${escapeHtml(s.name)}</td>
           <td class="p-2 border">${escapeHtml(s.role)}</td>
           <td class="p-2 border">${escapeHtml(s.interest)}</td>
-          <td class="p-2 border">${escapeHtml(s.power)}</td>
+          <td class="p-2 border text-center">${s.interestScore}</td>
+          <td class="p-2 border text-center">${s.powerScore}</td>
           <td class="p-2 border text-center"><button class="text-red-600 underline" data-i="${i}">Remove</button></td>`;
         tbody.appendChild(tr);
       });
       tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.stakeholders.splice(i,1); renderStakeholders(); autosave();
+        const i = parseInt(btn.dataset.i); state.stakeholders.splice(i,1); renderStakeholders(); drawStakeViz(); autosave(); renderBadges();
       }));
     }
     $("addStakeholder").addEventListener("click", () => {
       const name = $("stakeName").value.trim();
       const role = $("stakeRole").value.trim();
       const interest = $("stakeInterest").value.trim();
-      const power = $("stakePower").value.trim();
+      const interestScore = parseInt($("stakeInterestScore").value,10)||3;
+      const powerScore = parseInt($("stakePowerScore").value,10)||3;
       if (!name) return;
-      state.stakeholders.push({ name, role, interest, power });
-      ["stakeName","stakeRole","stakeInterest","stakePower"].forEach(id => $(id).value = "");
-      renderStakeholders(); autosave();
+      state.stakeholders.push({ name, role, interest, interestScore, powerScore });
+      ["stakeName","stakeRole","stakeInterest"].forEach(id => $(id).value = "");
+      renderStakeholders(); drawStakeViz(); autosave(); renderBadges();
     });
 
     // Instruments
+    $("effScore").addEventListener("input", e=> $("effView").textContent = e.target.value);
+    $("feaScore").addEventListener("input", e=> $("feaView").textContent = e.target.value);
+
     function renderInstruments() {
       const ul = $("instrumentList");
       ul.innerHTML = "";
@@ -319,23 +381,25 @@
         li.className = "border rounded p-2 flex items-start justify-between gap-3 bg-white";
         li.innerHTML = `
           <div>
-            <div class="font-medium">${escapeHtml(ins.name)}</div>
+            <div class="font-medium">${escapeHtml(ins.name)} <span class="text-xs text-gray-500">[Eff ${ins.eff}/5 • Fea ${ins.fea}/5]</span></div>
             <div class="text-sm text-gray-700">${escapeHtml(ins.why)}</div>
           </div>
           <button data-i="${i}" class="text-red-600 underline">Remove</button>`;
         ul.appendChild(li);
       });
       ul.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.instruments.splice(i,1); renderInstruments(); autosave();
+        const i = parseInt(btn.dataset.i); state.instruments.splice(i,1); renderInstruments(); drawInstViz(); autosave(); renderBadges();
       }));
     }
     $("addInstrument").addEventListener("click", () => {
       const name = $("instrumentPick").value;
       const why = $("instrumentWhy").value.trim();
+      const eff = parseInt($("effScore").value,10)||3;
+      const fea = parseInt($("feaScore").value,10)||3;
       if (!name) return;
-      state.instruments.push({ name, why });
+      state.instruments.push({ name, why, eff, fea });
       $("instrumentWhy").value = "";
-      renderInstruments(); autosave();
+      renderInstruments(); drawInstViz(); autosave(); renderBadges();
     });
 
     // Implementation
@@ -352,7 +416,7 @@
         tbody.appendChild(tr);
       });
       tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.implementation.splice(i,1); renderImpl(); autosave();
+        const i = parseInt(btn.dataset.i); state.implementation.splice(i,1); renderImpl(); drawImplViz(); autosave(); renderBadges();
       }));
     }
     $("addImpl").addEventListener("click", () => {
@@ -362,7 +426,7 @@
       if (!task) return;
       state.implementation.push({ task, actor, time });
       ["implTask","implActor","implTime"].forEach(id => $(id).value = "");
-      renderImpl(); autosave();
+      renderImpl(); drawImplViz(); autosave(); renderBadges();
     });
 
     // Metrics
@@ -379,7 +443,7 @@
         tbody.appendChild(tr);
       });
       tbody.querySelectorAll("button").forEach(btn => btn.addEventListener("click", () => {
-        const i = parseInt(btn.dataset.i); state.metrics.splice(i,1); renderMetrics(); autosave();
+        const i = parseInt(btn.dataset.i); state.metrics.splice(i,1); renderMetrics(); autosave(); renderBadges();
       }));
     }
     $("addMetric").addEventListener("click", () => {
@@ -389,7 +453,7 @@
       if (!name) return;
       state.metrics.push({ name, method, freq });
       ["metricName","metricMethod","metricFreq"].forEach(id => $(id).value = "");
-      renderMetrics(); autosave();
+      renderMetrics(); autosave(); renderBadges();
     });
 
     // Compile Proposal
@@ -411,10 +475,31 @@
     // Print
     $("printDoc").addEventListener("click", () => window.print());
 
+    // Export/Import JSON
+    $("exportJson").addEventListener("click", ()=>{
+      const blob=new Blob([JSON.stringify(state,null,2)],{type:"application/json"});
+      const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="PolicyLabState.json"; a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    $("importJsonBtn").addEventListener("click", ()=> $("importJsonFile").click());
+    $("importJsonFile").addEventListener("change", ()=>{
+      const f=$("importJsonFile").files[0]; if(!f) return;
+      const r=new FileReader(); r.onload=e=>{ try{
+        const s=JSON.parse(e.target.result); Object.assign(state,s||{});
+        // rehydrate
+        bindings.forEach(([id,key])=> { if($(id)) $(id).value = state[key] || ""; });
+        renderStakeholders(); renderInstruments(); renderImpl(); renderMetrics();
+        drawStakeViz(); drawInstViz(); drawImplViz(); autosave(); renderBadges();
+        showStep(8);
+      }catch{ alert("Invalid JSON"); } };
+      r.readAsText(f);
+    });
+
     // Save and load
     function autosave() {
       localStorage.setItem("policylab_state_v1", JSON.stringify(state));
       $("saveStatus").textContent = "Autosaved";
+      $("progressBar").style.width = completionPercent() + "%";
     }
     $("saveNow").addEventListener("click", autosave);
     $("loadNow").addEventListener("click", loadSaved);
@@ -424,10 +509,11 @@
       if (!saved) return;
       const s = JSON.parse(saved);
       Object.assign(state, s);
-      // Rehydrate inputs
       bindings.forEach(([id, key]) => { if ($(id)) $(id).value = state[key] || ""; });
       renderStakeholders(); renderInstruments(); renderImpl(); renderMetrics();
+      drawStakeViz(); drawInstViz(); drawImplViz();
       $("saveStatus").textContent = "Loaded";
+      renderBadges();
     }
 
     // Utils
@@ -435,9 +521,36 @@
       return str.replace(/[&<>"']/g, m => ({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m]));
     }
 
+    // Completion score (rough but useful)
+    function completionPercent(){
+      let score=0, total=8;
+      if(state.scenarioTitle && state.scenarioBrief) score++;
+      if(state.problemStatement && (state.symptoms||state.rootCauses)) score++;
+      if(state.stakeholders.length) score++;
+      if(state.objectives) score++;
+      if(state.instruments.length) score++;
+      if(state.implementation.length) score++;
+      if(state.metrics.length) score++;
+      if(true) score++; // synthesis always available
+      return Math.max(12.5, Math.round((score/total)*100));
+    }
+    function renderBadges(){
+      const set = (n, txt, ok)=> { const el=$("badge-"+n); el.textContent = txt; el.className = ok? "text-green-600" : "text-gray-400"; };
+      set(1, state.scenarioTitle? "✓" : "•", !!state.scenarioTitle);
+      set(2, state.problemStatement? "✓" : "•", !!state.problemStatement);
+      set(3, state.stakeholders.length? state.stakeholders.length : "0", !!state.stakeholders.length);
+      set(4, state.objectives? "✓" : "•", !!state.objectives);
+      set(5, state.instruments.length? state.instruments.length : "0", !!state.instruments.length);
+      set(6, state.implementation.length? state.implementation.length : "0", !!state.implementation.length);
+      set(7, state.metrics.length? state.metrics.length : "0", !!state.metrics.length);
+      set(8, "ready", true);
+      $("progressBar").style.width = completionPercent() + "%";
+    }
+
+    // Markdown compiler
     function compileMarkdown(s) {
-      const stakeLines = s.stakeholders.map(x => `- ${x.name} | role ${x.role} | interests ${x.interest} | power ${x.power}`).join("\n");
-      const insLines = s.instruments.map(x => `- ${x.name}: ${x.why}`).join("\n");
+      const stakeLines = s.stakeholders.map(x => `- ${x.name} | role ${x.role} | interests ${x.interest} | interest ${x.interestScore}/5 | power ${x.powerScore}/5`).join("\n");
+      const insLines = s.instruments.map(x => `- ${x.name}: ${x.why} (effectiveness ${x.eff}/5; feasibility ${x.fea}/5)`).join("\n");
       const implLines = s.implementation.map(x => `- ${x.task} | ${x.actor} | ${x.time}`).join("\n");
       const metricLines = s.metrics.map(x => `- ${x.name} | ${x.method} | ${x.freq}`).join("\n");
 
@@ -507,9 +620,94 @@ Provide a 150 word summary here after review.
       return h;
     }
 
+    // ---- Visuals (no external libs) ----
+    function drawStakeViz(){
+      const c = $("stakeViz"); if(!c) return;
+      const ctx = c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
+      const W=c.width, H=c.height, pad=36;
+      // axes box
+      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+      // grid labels
+      ctx.fillStyle="#6b7280"; ctx.font="12px ui-sans-serif";
+      ctx.fillText("Interest →", W/2-30, H-8);
+      ctx.save(); ctx.translate(12, H/2+30); ctx.rotate(-Math.PI/2); ctx.fillText("Power ↑",0,0); ctx.restore();
+      // quadrants
+      ctx.strokeStyle="#e5e7eb"; ctx.beginPath();
+      ctx.moveTo(W/2, pad); ctx.lineTo(W/2, H-pad);
+      ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2);
+      ctx.stroke();
+      // points
+      const X=(v)=> pad + (v-1)/4*(W-2*pad);
+      const Y=(v)=> H-pad - (v-1)/4*(H-2*pad);
+      state.stakeholders.forEach(s=>{
+        const x = X(s.interestScore||3), y = Y(s.powerScore||3);
+        ctx.fillStyle="#2563eb"; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#374151"; ctx.fillText(String(s.name).slice(0,22), x+8, y+4);
+      });
+    }
+
+    function drawInstViz(){
+      const c=$("instViz"); if(!c) return;
+      const ctx=c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
+      const W=c.width, H=c.height, pad=36;
+      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+      ctx.strokeStyle="#e5e7eb"; ctx.beginPath();
+      ctx.moveTo(W/2, pad); ctx.lineTo(W/2, H-pad);
+      ctx.moveTo(pad, H/2); ctx.lineTo(W-pad, H/2);
+      ctx.stroke();
+      ctx.fillStyle="#6b7280"; ctx.font="12px ui-sans-serif";
+      ctx.fillText("Feasibility →", W/2-30, H-8);
+      ctx.save(); ctx.translate(12,H/2+30); ctx.rotate(-Math.PI/2); ctx.fillText("Effectiveness ↑",0,0); ctx.restore();
+      const X=(v)=> pad + (v-1)/4*(W-2*pad);
+      const Y=(v)=> H-pad - (v-1)/4*(H-2*pad);
+      state.instruments.forEach(ins=>{
+        const x=X(ins.fea||3), y=Y(ins.eff||3);
+        ctx.fillStyle="#10b981"; ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#374151"; ctx.fillText(String(ins.name).slice(0,22), x+8, y+4);
+      });
+    }
+
+    function parseQuarter(str){
+      // accepts "Q1 2026" etc.
+      const m = String(str).trim().match(/Q([1-4])\s+(\d{4})/i);
+      if(!m) return null;
+      const q = parseInt(m[1],10), y = parseInt(m[2],10);
+      return {q,y, key:`${y}-Q${q}`};
+    }
+    function drawImplViz(){
+      const c=$("implViz"); if(!c) return;
+      const ctx=c.getContext("2d"); ctx.clearRect(0,0,c.width,c.height);
+      const W=c.width, H=c.height, pad=36;
+      const counts = {};
+      state.implementation.forEach(r=>{
+        const p=parseQuarter(r.time); if(p){ counts[p.key]=(counts[p.key]||0)+1; }
+      });
+      const keys = Object.keys(counts).sort((a,b)=>{
+        const [ay,aq]=a.split("-Q").map(Number); const [by,bq]=b.split("-Q").map(Number);
+        return ay===by? aq-bq : ay-by;
+      });
+      if(!keys.length){ ctx.fillStyle="#6b7280"; ctx.fillText("Add Qn YYYY to timelines to populate.", pad, pad+12); return; }
+      const max = Math.max(...keys.map(k=>counts[k]));
+      // axis
+      ctx.strokeStyle="#d1d5db"; ctx.strokeRect(pad,pad,W-2*pad,H-2*pad);
+      // bars
+      const bw = Math.max(10, (W-2*pad)/keys.length - 6);
+      keys.forEach((k,i)=>{
+        const x = pad + i*((W-2*pad)/keys.length) + 3;
+        const h = (H-2*pad)*(counts[k]/max);
+        ctx.fillStyle="#60a5fa"; ctx.fillRect(x, H-pad-h, bw, h);
+        if(keys.length<=12){ ctx.fillStyle="#6b7280"; ctx.font="10px ui-sans-serif"; ctx.fillText(k, x, H-pad+12); }
+      });
+    }
+
     // Init
-    showStep(1);
-    loadSaved();
+    function init(){
+      showStep(1);
+      loadSaved();
+      renderBadges();
+      drawStakeViz(); drawInstViz(); drawImplViz();
+    }
+    init();
   </script>
 </body>
 </html>
